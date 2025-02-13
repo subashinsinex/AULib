@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "university-library-app",
+    "slug": "university-library-app",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/Anna_University.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/Anna_University.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/Anna_University.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.subash_poornima.universitylibraryapp"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "d51ee026-2141-416e-b8c8-c6952a79bb7a"
+      }
+    }
+  }
+}

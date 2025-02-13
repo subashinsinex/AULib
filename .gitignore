@@ -1,0 +1,37 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+AULib-APP/node_modules/
+Server/node_modules/
+
+# Expo
+AULib-APP/.expo/
+AULib-APP/dist/
+AULib-APP/web-build/
+AULib-APP/expo-env.d.ts
+
+# Native
+AULib-APP/*.orig.*
+AULib-APP/*.jks
+AULib-APP/*.p8
+AULib-APP/*.p12
+AULib-APP/*.key
+AULib-APP/*.mobileprovision
+
+# Metro
+AULib-APP/.metro-health-check*
+
+# debug
+AULib-APP/npm-debug.*
+AULib-APP/yarn-debug.*
+AULib-APP/yarn-error.*
+
+# macOS
+AULib-APP/.DS_Store
+AULib-APP/*.pem
+
+# local env files
+AULib-APP/.env*.local
+
+# typescript
+AULib-APP/*.tsbuildinfo
