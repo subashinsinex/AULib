@@ -11,4 +11,5 @@ export default {
   book: <Ionicons name="book" size={24} color="#FFF" />, // Book icon
   search: <Ionicons name="search" size={24} color="#FFF" />, // Search icon
   arrowup: <Ionicons name="arrow-up" size={24} color="#FFF" />, // Arrow up icon
+  close: <Ionicons name="close" size={24} color="white" />, // Close icon
 };

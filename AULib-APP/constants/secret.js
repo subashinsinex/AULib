@@ -1,4 +1,4 @@
 export default {
-  Server_IP: "10.11.158.61",
+  Server_IP: "192.168.1.5",
   Server_Port: "5000",
 };

@@ -56,7 +56,7 @@ const Favorites = () => {
         DOIs.map(async (doi) => {
           try {
             const response = await axios.get(
-              `http://${secret.Server_IP}:${secret.Server_Port}/fetch-advanced`,
+              `http://${secret.Server_IP}:${secret.Server_Port}/search/fetch-advanced`,
               { params: { doi, userId } }
             );
             return response.data.length > 0

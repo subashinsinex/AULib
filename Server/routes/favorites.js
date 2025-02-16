@@ -1,0 +1,46 @@
+const express = require("express");
+const pool = require("../db");
+const router = express.Router();
+
+// ✅ Get Favorites
+router.get("/:userId", async (req, res) => {
+  const userId = parseInt(req.params.userId);
+  if (!Number.isInteger(userId))
+    return res.status(400).json({ error: "Invalid user ID" });
+
+  try {
+    const result = await pool.query(
+      "SELECT doi FROM favorites WHERE user_id = $1",
+      [userId]
+    );
+    res.json({ favorites: result.rows.map((row) => row.doi) });
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+// ✅ Add/Remove Favorite
+router.post("/", async (req, res) => {
+  const { userId, doi, isFav } = req.body;
+  if (!Number.isInteger(userId) || !doi)
+    return res.status(400).json({ error: "Invalid input" });
+
+  try {
+    if (isFav) {
+      await pool.query(
+        "INSERT INTO favorites (user_id, doi) VALUES ($1, $2) ON CONFLICT DO NOTHING",
+        [userId, doi]
+      );
+    } else {
+      await pool.query(
+        "DELETE FROM favorites WHERE user_id = $1 AND doi = $2",
+        [userId, doi]
+      );
+    }
+    res.json({ success: true });
+  } catch (error) {
+    res.status(500).json({ error: "Database error" });
+  }
+});
+
+module.exports = router;

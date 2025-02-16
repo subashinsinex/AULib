@@ -63,7 +63,7 @@ const BasicSearch = () => {
     try {
       const startIndex = page * itemsPerPage;
       const response = await axios.get(
-        `http://${secret.Server_IP}:${secret.Server_Port}/fetch`,
+        `http://${secret.Server_IP}:${secret.Server_Port}/search/fetch`,
         { params: { query, startIndex, itemsPerPage, userId } }
       );
 

@@ -1,15 +1,17 @@
 import React from "react";
-import { View, Text, TouchableOpacity, Linking } from "react-native";
+import { View, Text, TouchableOpacity } from "react-native";
+import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
 import styles from "../styles";
 
 const ItemCard = React.memo(({ item, isFav, toggleFavorite }) => {
+  const navigation = useNavigation();
   const scopusLink =
     item.link?.find((link) => link["@ref"] === "scopus")?.["@href"] || "#";
 
   const handlePress = () => {
     if (scopusLink !== "#") {
-      Linking.openURL(scopusLink);
+      navigation.push("Web", { uri: scopusLink }); // ✅ Open a new instance of Web.js
     }
   };
 
@@ -51,7 +53,11 @@ const ItemCard = React.memo(({ item, isFav, toggleFavorite }) => {
         <View
           style={[
             styles.row,
-            { alignItems: "center", justifyContent: "space-between" },
+            {
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 0,
+            },
           ]}
         >
           <View style={{ flex: 1 }}>
@@ -79,4 +85,4 @@ const ItemCard = React.memo(({ item, isFav, toggleFavorite }) => {
   );
 });
 
-export default ItemCard; // ✅ Correct export
+export default ItemCard;

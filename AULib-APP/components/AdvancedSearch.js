@@ -70,7 +70,7 @@ const AdvancedSearch = () => {
 
     try {
       const response = await axios.get(
-        `http://${secret.Server_IP}:${secret.Server_Port}/fetch-advanced`,
+        `http://${secret.Server_IP}:${secret.Server_Port}/search/fetch-advanced`,
         {
           params: {
             title,
