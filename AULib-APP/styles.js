@@ -100,6 +100,9 @@ export default StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
+  favButton: {
+    marginEnd: 10,
+  },
   floatingButton: {
     position: "absolute",
     bottom: 20,
@@ -130,7 +133,7 @@ export default StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 12,
     margin: 10,
-    padding: 20,
+    padding: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -177,12 +180,11 @@ export default StyleSheet.create({
     backgroundColor: "#e8f5e9",
     paddingVertical: 4,
     paddingHorizontal: 8,
-    borderRadius: 12,
+    borderRadius: 6,
     alignSelf: "flex-start",
-    marginBottom: 10,
   },
   openAccessText: {
-    fontSize: 12,
+    fontSize: 10,
     color: "#2e7d32",
     fontWeight: "500",
   },

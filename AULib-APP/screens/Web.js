@@ -37,7 +37,7 @@ export default function Web() {
       <TopBar title="Web" />
       <WebView
         ref={webViewRef}
-        source={{ uri: "https://idp.annauniv.edu/" }}
+        source={{ uri: "https://www.google.in/" }}
         style={styles.webView}
         onLoadProgress={({ nativeEvent }) => {
           setCanGoBack(nativeEvent.canGoBack);

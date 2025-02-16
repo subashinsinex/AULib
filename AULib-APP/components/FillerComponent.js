@@ -1,6 +1,5 @@
 import React from "react";
 import { TouchableWithoutFeedback, View, Keyboard } from "react-native";
-import colors from "../constants/colors";
 
 const FillerComponent = () => {
   return (

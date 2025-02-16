@@ -1,12 +1,14 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import {
   View,
   TextInput,
   TouchableOpacity,
   ActivityIndicator,
   FlatList,
-  Text,
   Keyboard,
+  ToastAndroid,
+  Platform,
+  Alert,
   Animated,
 } from "react-native";
 import styles from "../styles";
@@ -23,23 +25,37 @@ const BasicSearch = () => {
   const [loadingMore, setLoadingMore] = useState(false);
   const [message, setMessage] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
-  const [totalResults, setTotalResults] = useState(0);
+  const [favorites, setFavorites] = useState(new Set());
+
   const itemsPerPage = 25;
   const flatListRef = useRef(null);
+  const userId = 1;
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  const fetchData = async (page = 0, isLoadMore = false) => {
-    if (!query.trim()) {
-      setMessage("");
-      setData([]);
-      return;
+  // ✅ Load favorites
+  const loadFavorites = async () => {
+    try {
+      const res = await axios.get(
+        `http://${secret.Server_IP}:${secret.Server_Port}/favorites/${userId}`
+      );
+      setFavorites(new Set(res.data.favorites));
+    } catch (err) {
+      console.error("Error loading favorites:", err);
     }
+  };
 
-    if (isLoadMore) {
-      setLoadingMore(true);
-    } else {
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
+  // ✅ Fetch data
+  const fetchData = async (page = 0, isLoadMore = false) => {
+    if (!query.trim()) return;
+
+    if (isLoadMore) setLoadingMore(true);
+    else {
       setLoading(true);
-      setData([]); // Reset data when making a new search
+      setData([]);
     }
 
     Keyboard.dismiss();
@@ -48,23 +64,25 @@ const BasicSearch = () => {
       const startIndex = page * itemsPerPage;
       const response = await axios.get(
         `http://${secret.Server_IP}:${secret.Server_Port}/fetch`,
-        {
-          params: { query, startIndex, itemsPerPage },
-        }
+        { params: { query, startIndex, itemsPerPage, userId } }
       );
 
-      const results = response.data?.["search-results"]?.entry || [];
-      setTotalResults(
-        parseInt(
-          response.data?.["search-results"]["opensearch:totalResults"] || "0"
-        )
-      );
-
-      if (isLoadMore) {
-        setData((prevData) => [...prevData, ...results]);
-      } else {
-        setData(results);
+      let results = response.data || [];
+      if (!Array.isArray(results)) {
+        setMessage("Error: Unexpected data format");
+        setLoading(false);
+        setLoadingMore(false);
+        return;
       }
+
+      const updatedResults = results.map((item) => ({
+        ...item,
+        isFav: favorites.has(item["prism:doi"]),
+      }));
+
+      setData((prevData) =>
+        isLoadMore ? [...prevData, ...updatedResults] : updatedResults
+      );
 
       setMessage(results.length === 0 ? "No resources found" : "");
       setCurrentPage(page);
@@ -77,33 +95,75 @@ const BasicSearch = () => {
     }
   };
 
-  const loadMoreData = () => {
-    if (!loadingMore && (currentPage + 1) * itemsPerPage < totalResults) {
-      fetchData(currentPage + 1, true);
+  // ✅ Toggle favorite
+  const toggleFavorite = useCallback(async (doi, isFav) => {
+    try {
+      await axios.post(
+        `http://${secret.Server_IP}:${secret.Server_Port}/favorites`,
+        { userId, doi, isFav: !isFav }
+      );
+
+      setFavorites((prevFavs) => {
+        const newFavs = new Set(prevFavs);
+        if (isFav) newFavs.delete(doi);
+        else newFavs.add(doi);
+        return newFavs;
+      });
+
+      setData((prevData) =>
+        prevData.map((item) =>
+          item["prism:doi"] === doi ? { ...item, isFav: !isFav } : item
+        )
+      );
+
+      const message = isFav ? "Removed from favorites!" : "Added to favorites!";
+      if (Platform.OS === "android") {
+        ToastAndroid.show(message, ToastAndroid.SHORT);
+      } else {
+        Alert.alert(message);
+      }
+    } catch (error) {
+      console.error("Error updating favorite:", error);
     }
+  }, []);
+
+  // ✅ Scroll to top
+  const scrollToTop = () => {
+    flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
-  const scrollToTop = () => {
-    flatListRef.current?.scrollToOffset({ animated: true, offset: 0 });
-  };
+  // ✅ Memoized renderItem
+  const renderItem = useCallback(
+    ({ item }) => (
+      <ItemCard
+        item={item}
+        isFav={item.isFav}
+        toggleFavorite={() => toggleFavorite(item["prism:doi"], item.isFav)}
+      />
+    ),
+    [toggleFavorite]
+  );
 
   return (
     <View style={{ flex: 1 }}>
       <FlatList
         ref={flatListRef}
         data={data}
-        renderItem={({ item }) => <ItemCard item={item} />}
-        keyExtractor={(item, index) => index.toString()}
+        renderItem={renderItem}
+        keyExtractor={(item) => item["prism:doi"] || `no-doi-${item.id}`}
         ListEmptyComponent={!loading && <FillerComponent />}
         keyboardShouldPersistTaps="handled"
         contentContainerStyle={{ flexGrow: 1 }}
-        onEndReached={loadMoreData}
-        onEndReachedThreshold={0.5}
+        onEndReached={() => fetchData(currentPage + 1, true)}
+        onEndReachedThreshold={0.2}
         ListFooterComponent={
           loadingMore ? (
             <ActivityIndicator size="small" color="#007bff" />
           ) : null
         }
+        initialNumToRender={10}
+        windowSize={5}
+        removeClippedSubviews={true}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false }
@@ -123,7 +183,11 @@ const BasicSearch = () => {
               onPress={() => fetchData(0)}
               activeOpacity={0.7}
             >
-              {icons.search}
+              {loading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                icons.search
+              )}
             </TouchableOpacity>
           </View>
         }

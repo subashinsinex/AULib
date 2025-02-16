@@ -3,6 +3,7 @@
 # dependencies
 AULib-APP/node_modules/
 Server/node_modules/
+Server/.env
 
 # Expo
 AULib-APP/.expo/
