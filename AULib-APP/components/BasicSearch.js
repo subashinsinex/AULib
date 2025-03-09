@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useContext,
+} from "react";
 import {
   View,
   TextInput,
@@ -17,6 +23,8 @@ import axios from "axios";
 import ItemCard from "../components/ItemCard";
 import FillerComponent from "../components/FillerComponent";
 import secret from "../constants/secret";
+import { AuthContext } from "../constants/AuthContext";
+import colors from "../constants/colors";
 
 const BasicSearch = () => {
   const [query, setQuery] = useState("");
@@ -29,14 +37,16 @@ const BasicSearch = () => {
 
   const itemsPerPage = 25;
   const flatListRef = useRef(null);
-  const userId = 1;
+  const { user, accessToken } = useContext(AuthContext);
+  const userId = Number(user);
   const scrollY = useRef(new Animated.Value(0)).current;
 
   // ✅ Load favorites
   const loadFavorites = async () => {
     try {
       const res = await axios.get(
-        `http://${secret.Server_IP}:${secret.Server_Port}/favorites/${userId}`
+        `http://${secret.Server_IP}:${secret.Server_Port}/favorites/${userId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
       setFavorites(new Set(res.data.favorites));
     } catch (err) {
@@ -64,7 +74,15 @@ const BasicSearch = () => {
       const startIndex = page * itemsPerPage;
       const response = await axios.get(
         `http://${secret.Server_IP}:${secret.Server_Port}/search/fetch`,
-        { params: { query, startIndex, itemsPerPage, userId } }
+        {
+          params: {
+            query,
+            startIndex,
+            itemsPerPage,
+            userId,
+          },
+          headers: { Authorization: `Bearer ${accessToken}` },
+        }
       );
 
       let results = response.data || [];
@@ -100,7 +118,12 @@ const BasicSearch = () => {
     try {
       await axios.post(
         `http://${secret.Server_IP}:${secret.Server_Port}/favorites`,
-        { userId, doi, isFav: !isFav }
+        {
+          userId,
+          doi,
+          isFav: !isFav,
+        },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
       setFavorites((prevFavs) => {
@@ -158,7 +181,7 @@ const BasicSearch = () => {
         onEndReachedThreshold={0.2}
         ListFooterComponent={
           loadingMore ? (
-            <ActivityIndicator size="small" color="#007bff" />
+            <ActivityIndicator size="small" color={colors.primary} />
           ) : null
         }
         initialNumToRender={10}
@@ -184,7 +207,7 @@ const BasicSearch = () => {
               activeOpacity={0.7}
             >
               {loading ? (
-                <ActivityIndicator size="small" color="#fff" />
+                <ActivityIndicator size="small" color={colors.primary} />
               ) : (
                 icons.search
               )}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useContext } from "react";
 import {
   View,
   FlatList,
@@ -10,6 +10,7 @@ import axios from "axios";
 import secret from "../constants/secret";
 import ItemCard from "./ItemCard";
 import FillerComponent from "./FillerComponent";
+import { AuthContext } from "../constants/AuthContext";
 
 const Favorites = () => {
   const [data, setData] = useState([]);
@@ -18,7 +19,8 @@ const Favorites = () => {
     Dimensions.get("window").height
   );
   const [contentHeight, setContentHeight] = useState(0);
-  const userId = 1; // ✅ Hardcoded for testing
+  const { user, accessToken } = useContext(AuthContext);
+  const userId = Number(user);
 
   useEffect(() => {
     fetchFavorites();
@@ -27,7 +29,8 @@ const Favorites = () => {
   const fetchFavorites = async () => {
     try {
       const response = await axios.get(
-        `http://${secret.Server_IP}:${secret.Server_Port}/favorites/${userId}`
+        `http://${secret.Server_IP}:${secret.Server_Port}/favorites/${userId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
       if (!response.data || !Array.isArray(response.data.favorites)) {
@@ -35,7 +38,6 @@ const Favorites = () => {
       }
 
       const favoriteDOIs = response.data.favorites;
-
       if (favoriteDOIs.length > 0) {
         await fetchMetadata(favoriteDOIs);
       } else {
@@ -57,16 +59,19 @@ const Favorites = () => {
           try {
             const response = await axios.get(
               `http://${secret.Server_IP}:${secret.Server_Port}/search/fetch-advanced`,
-              { params: { doi, userId } }
+              {
+                params: { doi, userId },
+                headers: { Authorization: `Bearer ${accessToken}` },
+              }
             );
             return response.data.length > 0
               ? { ...response.data[0], isFav: true }
               : null;
           } catch (error) {
-            console.error(
-              `Error fetching metadata for DOI: ${doi}`,
-              error.response?.data || error.message
-            );
+            // console.error(
+            //   `Error fetching metadata for DOI: ${doi}`,
+            //   error.response?.data || error.message
+            // );
             return null;
           }
         })
@@ -80,20 +85,28 @@ const Favorites = () => {
     }
   };
 
-  const removeFavorite = useCallback(async (doi) => {
-    try {
-      await axios.post(
-        `http://${secret.Server_IP}:${secret.Server_Port}/favorites`,
-        { userId, doi, isFav: false }
-      );
+  const removeFavorite = useCallback(
+    async (doi) => {
+      try {
+        await axios.post(
+          `http://${secret.Server_IP}:${secret.Server_Port}/favorites`,
+          {
+            userId,
+            doi,
+            isFav: false,
+          },
+          { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
 
-      setData((prevData) =>
-        prevData.filter((item) => item["prism:doi"] !== doi)
-      );
-    } catch (error) {
-      console.error("Error removing favorite:", error);
-    }
-  }, []);
+        setData((prevData) =>
+          prevData.filter((item) => item["prism:doi"] !== doi)
+        );
+      } catch (error) {
+        console.error("Error removing favorite:", error);
+      }
+    },
+    [accessToken]
+  );
 
   if (loading) {
     return (

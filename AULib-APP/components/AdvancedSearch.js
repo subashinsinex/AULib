@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  useContext,
+} from "react";
 import {
   View,
   TextInput,
@@ -19,6 +25,8 @@ import axios from "axios";
 import secret from "../constants/secret";
 import ItemCard from "../components/ItemCard";
 import FillerComponent from "../components/FillerComponent";
+import { AuthContext } from "../constants/AuthContext";
+import colors from "../constants/colors";
 
 const AdvancedSearch = () => {
   const [title, setTitle] = useState("");
@@ -35,18 +43,19 @@ const AdvancedSearch = () => {
   const [screenHeight, setScreenHeight] = useState(
     Dimensions.get("window").height
   );
-  const [contentHeight, setContentHeight] = useState(0);
 
   const itemsPerPage = 20;
   const flatListRef = useRef(null);
   const scrollY = useRef(new Animated.Value(0)).current;
-  const userId = 1;
+  const { user, accessToken } = useContext(AuthContext);
+  const userId = Number(user);
 
   useEffect(() => {
     const loadFavorites = async () => {
       try {
         const res = await axios.get(
-          `http://${secret.Server_IP}:${secret.Server_Port}/favorites/${userId}`
+          `http://${secret.Server_IP}:${secret.Server_Port}/favorites/${userId}`,
+          { headers: { Authorization: `Bearer ${accessToken}` } }
         );
         setFavorites(new Set(res.data.favorites));
       } catch (err) {
@@ -82,6 +91,7 @@ const AdvancedSearch = () => {
             itemsPerPage,
             userId,
           },
+          headers: { Authorization: `Bearer ${accessToken}` },
         }
       );
 
@@ -116,7 +126,8 @@ const AdvancedSearch = () => {
     try {
       await axios.post(
         `http://${secret.Server_IP}:${secret.Server_Port}/favorites`,
-        { userId, doi, isFav: !isFav }
+        { userId, doi, isFav: !isFav },
+        { headers: { Authorization: `Bearer ${accessToken}` } }
       );
 
       setFavorites((prevFavs) => {
@@ -149,10 +160,7 @@ const AdvancedSearch = () => {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
       style={{ flex: 1 }}
     >
-      <View
-        style={{ flex: 1 }}
-        onLayout={(event) => setScreenHeight(event.nativeEvent.layout.height)}
-      >
+      <View style={{ flex: 1 }}>
         <FlatList
           ref={flatListRef}
           data={data}
@@ -170,15 +178,18 @@ const AdvancedSearch = () => {
             `${item["prism:doi"] || "no-doi"}-${index}`
           }
           keyboardShouldPersistTaps="handled"
-          contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
+          ListEmptyComponent={!loading && <FillerComponent />}
+          contentContainerStyle={{ flexGrow: 1 }}
           onEndReached={() => fetchData(currentPage + 1, true)}
           onEndReachedThreshold={0.2}
-          onContentSizeChange={(width, height) => setContentHeight(height)}
           ListFooterComponent={
             loadingMore ? (
-              <ActivityIndicator size="small" color="#007bff" />
+              <ActivityIndicator size="small" color={colors.primary} />
             ) : null
           }
+          initialNumToRender={10}
+          windowSize={5}
+          removeClippedSubviews={true}
           onScroll={Animated.event(
             [{ nativeEvent: { contentOffset: { y: scrollY } } }],
             { useNativeDriver: false }
@@ -228,7 +239,7 @@ const AdvancedSearch = () => {
                   activeOpacity={0.7}
                 >
                   {loading ? (
-                    <ActivityIndicator size="small" color="#fff" />
+                    <ActivityIndicator size="small" color={colors.primary} />
                   ) : (
                     icons.search
                   )}
@@ -237,12 +248,6 @@ const AdvancedSearch = () => {
             </View>
           }
         />
-
-        {data.length === 0 && (
-          <View style={{ height: screenHeight - contentHeight }}>
-            <FillerComponent />
-          </View>
-        )}
 
         <Animated.View
           style={[

@@ -2,11 +2,12 @@ const express = require("express");
 const { fetchScopusData } = require("../utils/scopus");
 const { rankResults } = require("../utils/ranking");
 const pool = require("../db");
+const jwtChecker = require("../utils/jwtchecker");
 
 const router = express.Router();
 
 // ✅ Basic Search
-router.get("/fetch", async (req, res) => {
+router.get("/fetch", jwtChecker, async (req, res) => {
   const { query = "AI", startIndex = 0, itemsPerPage = 25, userId } = req.query;
 
   try {
@@ -30,10 +31,11 @@ router.get("/fetch", async (req, res) => {
 });
 
 // ✅ Advanced Search
-router.get("/fetch-advanced", async (req, res) => {
+router.get("/fetch-advanced", jwtChecker, async (req, res) => {
   const {
     title,
     author,
+    publication,
     doi,
     issn,
     keyword,
@@ -45,6 +47,7 @@ router.get("/fetch-advanced", async (req, res) => {
   let queryParts = [];
   if (title) queryParts.push(`TITLE(${title})`);
   if (author) queryParts.push(`AUTH(${author})`);
+  if (publication) queryParts.push(`SRCTITLE(${publication})`);
   if (doi) queryParts.push(`DOI(${doi})`);
   if (issn) queryParts.push(`ISSN(${issn})`);
   if (keyword) queryParts.push(`KEY(${keyword})`);

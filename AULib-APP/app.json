@@ -7,11 +7,6 @@
     "icon": "./assets/Anna_University.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "splash": {
-      "image": "./assets/Anna_University.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
     "ios": {
       "supportsTablet": true
     },
@@ -20,7 +15,7 @@
         "foregroundImage": "./assets/Anna_University.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "com.subash_poornima.universitylibraryapp"
+      "package": "com.subash.universitylibraryapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -29,6 +24,7 @@
       "eas": {
         "projectId": "d51ee026-2141-416e-b8c8-c6952a79bb7a"
       }
-    }
+    },
+    "plugins": ["expo-secure-store"]
   }
 }

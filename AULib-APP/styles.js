@@ -152,7 +152,7 @@ export default StyleSheet.create({
   },
   itemJournal: {
     fontSize: 14,
-    color: "#007bff",
+    color: colors.primary,
     marginBottom: 6,
     fontWeight: "500",
   },
@@ -270,5 +270,62 @@ export default StyleSheet.create({
     fontSize: 18,
     fontWeight: "bold",
     justifyContent: "center",
+  },
+  LoginContainer: {
+    flex: 1,
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    paddingHorizontal: 20,
+    paddingTop: 50, // Adds space from the top
+  },
+  LoginLogo: {
+    width: 150,
+    height: 150,
+    marginBottom: 30, // Space between logo and other elements
+  },
+  LoginTitle: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 10,
+  },
+  LoginSubtitle: {
+    fontSize: 16,
+    color: "#dfe6e9",
+    marginBottom: 5,
+  },
+  LoginError: {
+    color: colors.red,
+    fontSize: 18,
+    textAlign: "center",
+    marginBottom: 5,
+  },
+  LoginInputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    paddingVertical: 10,
+    marginBottom: 15,
+    width: "90%",
+  },
+  LoginInput: {
+    flex: 1,
+    fontSize: 16,
+    paddingLeft: 10,
+    color: "#333",
+  },
+  LoginButton: {
+    backgroundColor: colors.white,
+    padding: 12,
+    borderRadius: 10,
+    alignItems: "center",
+    width: "40%",
+  },
+  LoginButtonText: {
+    color: colors.primary,
+    fontSize: 20,
+    fontWeight: "bold",
   },
 });

@@ -1,9 +1,10 @@
 const express = require("express");
 const pool = require("../db");
 const router = express.Router();
+const jwtChecker = require("../utils/jwtchecker");
 
 // ✅ Get Favorites
-router.get("/:userId", async (req, res) => {
+router.get("/:userId", jwtChecker, async (req, res) => {
   const userId = parseInt(req.params.userId);
   if (!Number.isInteger(userId))
     return res.status(400).json({ error: "Invalid user ID" });
@@ -20,10 +21,12 @@ router.get("/:userId", async (req, res) => {
 });
 
 // ✅ Add/Remove Favorite
-router.post("/", async (req, res) => {
+router.post("/", jwtChecker, async (req, res) => {
   const { userId, doi, isFav } = req.body;
-  if (!Number.isInteger(userId) || !doi)
+
+  if (!Number.isInteger(userId) || !doi || typeof isFav !== "boolean") {
     return res.status(400).json({ error: "Invalid input" });
+  }
 
   try {
     if (isFav) {

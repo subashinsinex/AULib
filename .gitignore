@@ -4,6 +4,7 @@
 AULib-APP/node_modules/
 Server/node_modules/
 Server/.env
+*/.env
 
 # Expo
 AULib-APP/.expo/

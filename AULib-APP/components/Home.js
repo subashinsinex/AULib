@@ -1,16 +1,20 @@
-import React from "react";
+import React, { useContext } from "react";
 import { SafeAreaView, ScrollView, View, Text } from "react-native";
 import Chart from "../components/Chart";
 import FillerComponent from "../components/FillerComponent"; // Import your FillerComponent
 import styles from "../styles";
+import { AuthContext } from "../constants/AuthContext";
 
 export default function Home() {
   const [showFiller, setShowFiller] = React.useState(true); // Control visibility of the filler component
+  const { user } = useContext(AuthContext);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>
-        <Text style={styles.greeting}>Welcome User!</Text>
+        <View style={styles.container}>
+          <Text style={styles.greeting}>Welcome, {user || "Guest"}!</Text>
+        </View>
         <View style={styles.cardContainer}>
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Total Logins</Text>

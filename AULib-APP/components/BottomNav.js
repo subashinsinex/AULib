@@ -27,10 +27,10 @@ export default function BottomNav() {
 
       <TouchableOpacity
         style={styles.navItem}
-        onPress={() => handlePress("Books")}
+        onPress={() => handlePress("Search")}
       >
-        {React.cloneElement(icons.book, {
-          color: route.name === "Books" ? "#FFF" : "#888",
+        {React.cloneElement(icons.search, {
+          color: route.name === "Search" ? "#FFF" : "#888",
         })}
       </TouchableOpacity>
     </View>

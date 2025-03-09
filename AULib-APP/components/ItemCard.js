@@ -3,11 +3,13 @@ import { View, Text, TouchableOpacity } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { FontAwesome } from "@expo/vector-icons";
 import styles from "../styles";
+import colors from "../constants/colors";
 
 const ItemCard = React.memo(({ item, isFav, toggleFavorite }) => {
   const navigation = useNavigation();
-  const scopusLink =
-    item.link?.find((link) => link["@ref"] === "scopus")?.["@href"] || "#";
+  const scopusLink = item["prism:doi"]
+    ? `https://doi.org/${item["prism:doi"]}`
+    : item.link?.find((link) => link["@ref"] === "scopus")?.["@href"] || "#";
 
   const handlePress = () => {
     if (scopusLink !== "#") {
@@ -76,7 +78,7 @@ const ItemCard = React.memo(({ item, isFav, toggleFavorite }) => {
             <FontAwesome
               name={isFav ? "heart" : "heart-o"}
               size={25}
-              color={isFav ? "red" : "gray"}
+              color={isFav ? colors.primary : "gray"}
             />
           </TouchableOpacity>
         </View>

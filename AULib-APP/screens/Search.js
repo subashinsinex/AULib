@@ -12,14 +12,13 @@ import TopBar from "../components/TopBar";
 import BasicSearch from "../components/BasicSearch";
 import AdvancedSearch from "../components/AdvancedSearch";
 
-export default function Books() {
+export default function Search() {
   const layout = useWindowDimensions();
   const [index, setIndex] = useState(0);
   const [routes] = useState([
     { key: "basic", title: "Basic Search" },
     { key: "advanced", title: "Advanced Search" },
   ]);
-
   // Persist the search components
   const basicSearchComponent = useMemo(() => <BasicSearch />, []);
   const advancedSearchComponent = useMemo(() => <AdvancedSearch />, []);
@@ -38,7 +37,7 @@ export default function Books() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
-      <TopBar title="eResources" />
+      <TopBar title="Search" />
 
       <View style={{ flex: 1 }}>
         <TabView
