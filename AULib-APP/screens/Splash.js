@@ -94,8 +94,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.05,
   },
   SplashLogo: {
-    width: width * 0.6,
-    height: height * 0.3,
+    width: width * 0.35,
+    height: height * 0.24,
     resizeMode: "contain",
   },
   SplashProgressContainer: {

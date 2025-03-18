@@ -19,6 +19,7 @@ import Dashboard from "./screens/Dashboard";
 import Search from "./screens/Search";
 import Web from "./screens/Web";
 import LoginScreen from "./screens/Login";
+import Profile from "./screens/Profile";
 import BottomNav from "./components/BottomNav";
 import { AuthProvider, AuthContext } from "./constants/AuthContext";
 import ActiveTimer from "./constants/ActiveTimer";
@@ -38,6 +39,7 @@ function ScreenWrapper({ children, hideBottomNav }) {
 function AppContent() {
   const { refreshAccessToken, accessToken } = useContext(AuthContext);
   const [loading, setLoading] = useState(true);
+  const exitCount = useRef(0);
   const navigationRef = useRef(null);
 
   // Ensure ActiveTimer refreshes the token before app starts
@@ -58,13 +60,16 @@ function AppContent() {
       const currentScreen = navigationRef.current.getCurrentRoute()?.name;
 
       if (currentScreen === "Dashboard" || currentScreen === "Login") {
-        if (exitCount === 1) {
+        if (exitCount.current === 1) {
           BackHandler.exitApp();
           return true;
         }
-        setExitCount(1);
+        exitCount.current = 1;
         ToastAndroid.show("Press back again to exit", ToastAndroid.SHORT);
-        setTimeout(() => setExitCount(0), 2000);
+
+        setTimeout(() => {
+          exitCount.current = 0;
+        }, 2000);
         return true;
       }
 
@@ -126,6 +131,13 @@ function AppContent() {
               {({ route }) => (
                 <ScreenWrapper hideBottomNav={true}>
                   <Web route={route} />
+                </ScreenWrapper>
+              )}
+            </Stack.Screen>
+            <Stack.Screen name="Profile">
+              {() => (
+                <ScreenWrapper hideBottomNav={false}>
+                  <Profile />
                 </ScreenWrapper>
               )}
             </Stack.Screen>

@@ -70,11 +70,15 @@ export default StyleSheet.create({
     padding: 15,
     width: dimensions.cardWidth,
     elevation: 3,
+    alignItems: "center",
   },
   cardContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     marginBottom: 20,
+    marginLeft: 20,
+    marginRight: 20,
+    alignItems: "center",
   },
   cardTitle: {
     fontSize: 16,
@@ -122,6 +126,7 @@ export default StyleSheet.create({
   greeting: {
     fontSize: 20,
     textAlign: "center",
+    fontWeight: "bold",
     marginVertical: 10,
   },
   itemAuthor: {
@@ -273,15 +278,18 @@ export default StyleSheet.create({
   },
   LoginContainer: {
     flex: 1,
-    alignItems: "center",
     backgroundColor: colors.primary,
+  },
+  LoginContent: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 20,
-    paddingTop: 50, // Adds space from the top
   },
   LoginLogo: {
-    width: 150,
-    height: 150,
-    marginBottom: 30, // Space between logo and other elements
+    width: 125,
+    height: 125,
+    marginBottom: 30,
   },
   LoginTitle: {
     fontSize: 28,
@@ -292,23 +300,28 @@ export default StyleSheet.create({
   LoginSubtitle: {
     fontSize: 16,
     color: "#dfe6e9",
-    marginBottom: 5,
+    marginBottom: 30,
   },
   LoginError: {
     color: colors.red,
-    fontSize: 18,
+    fontSize: 16,
     textAlign: "center",
-    marginBottom: 5,
+    marginBottom: 20,
   },
   LoginInputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    borderRadius: 10,
-    paddingHorizontal: 15,
+    borderRadius: 25,
+    paddingHorizontal: 20,
     paddingVertical: 10,
     marginBottom: 15,
-    width: "90%",
+    width: "100%",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   LoginInput: {
     flex: 1,
@@ -318,14 +331,20 @@ export default StyleSheet.create({
   },
   LoginButton: {
     backgroundColor: colors.white,
-    padding: 12,
-    borderRadius: 10,
+    padding: 15,
+    borderRadius: 25,
     alignItems: "center",
-    width: "40%",
+    width: "100%",
+    marginTop: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   LoginButtonText: {
     color: colors.primary,
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: "bold",
   },
 });

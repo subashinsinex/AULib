@@ -12,4 +12,5 @@ export default {
   search: <Ionicons name="search" size={24} color="#FFF" />, // Search icon
   arrowup: <Ionicons name="arrow-up" size={24} color="#FFF" />, // Arrow up icon
   close: <Ionicons name="close" size={24} color="white" />, // Close icon
+  person: <Ionicons name="person" size={24} color="#FFF" />, // Person icon
 };

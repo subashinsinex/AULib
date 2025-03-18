@@ -9,19 +9,26 @@ export const AuthProvider = ({ children, navigationRef }) => {
   const [user, setUser] = useState(null);
   const [accessToken, setAccessToken] = useState(null);
   const [refreshToken, setRefreshToken] = useState(null);
+  const [profile, setProfile] = useState(null);
 
-  const login = async (accessToken, refreshToken, userId) => {
+  const login = async (accessToken, refreshToken, userId, profileData) => {
     try {
+      if (!profileData || typeof profileData !== "object") {
+        console.error("Invalid profileData:", profileData);
+        return;
+      }
+
       await SecureStore.setItemAsync(
         "auth",
         JSON.stringify({ accessToken, refreshToken, userId })
       );
       await SecureStore.setItemAsync("accessToken", accessToken);
       await SecureStore.setItemAsync("refreshToken", refreshToken);
-
+      await SecureStore.setItemAsync("profile", JSON.stringify(profileData));
       setUser(userId);
       setAccessToken(accessToken);
       setRefreshToken(refreshToken);
+      setProfile(profileData);
     } catch (error) {
       console.error("Error storing login data:", error);
     }
@@ -38,11 +45,12 @@ export const AuthProvider = ({ children, navigationRef }) => {
         await SecureStore.deleteItemAsync("auth");
         await SecureStore.deleteItemAsync("accessToken");
         await SecureStore.deleteItemAsync("refreshToken");
+        await SecureStore.deleteItemAsync("profile");
 
         setUser(null);
         setAccessToken(null);
         setRefreshToken(null);
-        console.log("User logged out and data cleared");
+        setProfile(null);
 
         if (navigationRef?.current?.isReady()) {
           navigationRef.current.navigate("Login");
@@ -112,6 +120,7 @@ export const AuthProvider = ({ children, navigationRef }) => {
         user,
         accessToken,
         refreshToken,
+        profile,
         login,
         logout,
         refreshAccessToken,

@@ -11,6 +11,7 @@ import secret from "../constants/secret";
 import ItemCard from "./ItemCard";
 import FillerComponent from "./FillerComponent";
 import { AuthContext } from "../constants/AuthContext";
+import colors from "../constants/colors";
 
 const Favorites = () => {
   const [data, setData] = useState([]);
@@ -111,7 +112,7 @@ const Favorites = () => {
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color={colors.primary} />
       </View>
     );
   }

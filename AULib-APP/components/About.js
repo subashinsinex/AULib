@@ -25,7 +25,7 @@ const About = () => {
       await logout();
       navigation.replace("Login"); // Redirect to login screen after logout
     } catch (error) {
-      console.error("Logout error:", error);
+      navigation.replace("Login");
     }
   };
 
