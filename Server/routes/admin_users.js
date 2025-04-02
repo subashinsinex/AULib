@@ -5,7 +5,34 @@ const jwtChecker = require("../utils/jwtchecker");
 
 const router = express.Router();
 
-router.post("/add", jwtChecker, async (req, res) => {
+// Admin Checker Middleware
+const adminChecker = async (req, res, next) => {
+  try {
+    const userId = req.userId; // Extracted from JWT token
+
+    // Check if the logged-in user is an admin
+    const adminCheck = await pool.query(
+      "SELECT user_cat_id FROM user_details WHERE user_id = $1",
+      [userId]
+    );
+
+    if (adminCheck.rows.length === 0) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (adminCheck.rows[0].user_cat_id !== 1) {
+      // Assuming 1 is the admin category ID
+      return res.status(403).json({ error: "Access denied. Admins only." });
+    }
+
+    next(); // User is admin, proceed to the next middleware/route handler
+  } catch (error) {
+    console.error("Admin check error:", error);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+router.post("/add", jwtChecker, adminChecker, async (req, res) => {
   const {
     user_id,
     name,
@@ -70,30 +97,14 @@ router.post("/add", jwtChecker, async (req, res) => {
   }
 });
 
-router.get("/getUsers", jwtChecker, async (req, res) => {
+router.get("/getUsers", jwtChecker, adminChecker, async (req, res) => {
   try {
-    const userId = req.userId; // Extracted from JWT token
-
-    // Check if the logged-in user is an admin
-    const adminCheck = await pool.query(
-      "SELECT user_cat_id FROM user_details WHERE user_id = $1",
-      [userId]
-    );
-
-    if (adminCheck.rows.length === 0) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    if (adminCheck.rows[0].user_cat_id !== 1) {
-      return res.status(403).json({ error: "Access denied. Admins only." });
-    }
-
     const result = await pool.query(
       `SELECT 
-        ua.user_id, ua.email, ua.mobile, 
-        ud.name, uc.category_name, 
-        c.college_name, d.department_name, 
-        b.branch_name, dg.degree_name, 
+        ua.user_id, ua.email, ua.mobile, ua.is_active, 
+        ud.name, uc.category_name, c.college_id,
+        c.college_name, d.department_id, d.department_name, 
+        b.branch_id, b.branch_name, dg.degree_id, dg.degree_name, 
         ud.batch_in, ud.batch_out
       FROM user_auth ua
       LEFT JOIN user_details ud ON ua.user_id = ud.user_id
@@ -110,5 +121,107 @@ router.get("/getUsers", jwtChecker, async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
+router.put(
+  "/toggleUserStatus/:userId",
+  jwtChecker,
+  adminChecker,
+  async (req, res) => {
+    const { userId } = req.params;
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      // First check if the user exists
+      const userCheck = await client.query(
+        "SELECT is_active FROM user_auth WHERE user_id = $1",
+        [userId]
+      );
+
+      if (userCheck.rows.length === 0) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      const currentStatus = userCheck.rows[0].is_active;
+      const newStatus = !currentStatus;
+
+      // Update the user status
+      await client.query(
+        "UPDATE user_auth SET is_active = $1 WHERE user_id = $2",
+        [newStatus, userId]
+      );
+
+      await client.query("COMMIT");
+      res.json({
+        message: `User ${newStatus ? "enabled" : "disabled"} successfully`,
+        userId,
+        newStatus,
+      });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Error toggling user status:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      client.release();
+    }
+  }
+);
+
+router.put(
+  "/updateUser/:userId",
+  jwtChecker,
+  adminChecker,
+  async (req, res) => {
+    const { userId } = req.params;
+    const {
+      name,
+      email,
+      mobile,
+      college_id,
+      department_id,
+      degree_id,
+      branch_id,
+      batch_in,
+      batch_out,
+    } = req.body;
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      // Update user_auth table
+      await client.query(
+        `UPDATE user_auth SET email = $1, mobile = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $3`,
+        [email, mobile, userId]
+      );
+
+      // Update user_details table
+      await client.query(
+        `UPDATE user_details SET name = $1, college_id = $2, department_id = $3, degree_id = $4, branch_id = $5, batch_in = $6, batch_out = $7 WHERE user_id = $8`,
+        [
+          name,
+          college_id,
+          department_id,
+          degree_id,
+          branch_id,
+          batch_in,
+          batch_out,
+          userId,
+        ]
+      );
+
+      await client.query("COMMIT");
+      res.json({ message: "User updated successfully", userId });
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Error updating user:", error);
+      res.status(500).json({ error: "Internal Server Error" });
+    } finally {
+      client.release();
+    }
+  }
+);
 
 module.exports = router;

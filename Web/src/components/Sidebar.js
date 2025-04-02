@@ -181,6 +181,7 @@ const Sidebar = ({ onSelectItem, selected, isOpen, toggleSidebar }) => {
         open={openSnackbar}
         autoHideDuration={6000}
         onClose={() => setOpenSnackbar(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
       >
         <Alert
           onClose={() => setOpenSnackbar(false)}

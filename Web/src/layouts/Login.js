@@ -248,7 +248,11 @@ const Login = () => {
       </LoginContainer>
 
       {/* Snackbar Notification */}
-      <Snackbar open={snackbarOpen} autoHideDuration={3000}>
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
         <Alert
           severity="success"
           sx={{ backgroundColor: "#4caf50", color: "#fff" }}
