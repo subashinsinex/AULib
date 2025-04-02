@@ -13,7 +13,7 @@ const ItemCard = React.memo(({ item, isFav, toggleFavorite }) => {
 
   const handlePress = () => {
     if (scopusLink !== "#") {
-      navigation.push("Web", { uri: scopusLink }); // ✅ Open a new instance of Web.js
+      navigation.push("Web", { uri: scopusLink });
     }
   };
 

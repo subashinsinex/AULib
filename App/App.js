@@ -20,6 +20,7 @@ import Search from "./screens/Search";
 import Web from "./screens/Web";
 import LoginScreen from "./screens/Login";
 import Profile from "./screens/Profile";
+import Resources from "./screens/Resources";
 import BottomNav from "./components/BottomNav";
 import { AuthProvider, AuthContext } from "./constants/AuthContext";
 import ActiveTimer from "./constants/ActiveTimer";
@@ -57,7 +58,16 @@ function AppContent() {
     const backAction = () => {
       if (!navigationRef.current) return false;
 
+      const navigationState = navigationRef.current.getState();
+      const routes = navigationState?.routes || [];
       const currentScreen = navigationRef.current.getCurrentRoute()?.name;
+      const prevScreen =
+        routes.length > 1 ? routes[routes.length - 2]?.name : null;
+
+      if (prevScreen === "Dashboard" || prevScreen === "Login") {
+        navigationRef.current.goBack();
+        return true;
+      }
 
       if (currentScreen === "Dashboard" || currentScreen === "Login") {
         if (exitCount.current === 1) {
@@ -127,6 +137,13 @@ function AppContent() {
                 </ScreenWrapper>
               )}
             </Stack.Screen>
+            <Stack.Screen name="Profile">
+              {() => (
+                <ScreenWrapper hideBottomNav={false}>
+                  <Profile />
+                </ScreenWrapper>
+              )}
+            </Stack.Screen>
             <Stack.Screen name="Web">
               {({ route }) => (
                 <ScreenWrapper hideBottomNav={true}>
@@ -134,10 +151,10 @@ function AppContent() {
                 </ScreenWrapper>
               )}
             </Stack.Screen>
-            <Stack.Screen name="Profile">
+            <Stack.Screen name="Resources">
               {() => (
                 <ScreenWrapper hideBottomNav={false}>
-                  <Profile />
+                  <Resources />
                 </ScreenWrapper>
               )}
             </Stack.Screen>

@@ -38,7 +38,7 @@ const Login = () => {
     try {
       const response = await axios.post(
         `http://${secret.Server_IP}:${secret.Server_Port}/userAuth/login`,
-        { user_id, password }
+        { user_id, password, platform: "mobile" }
       );
 
       const { accessToken, refreshToken } = response.data;

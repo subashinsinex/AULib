@@ -37,6 +37,15 @@ export default function BottomNav() {
 
       <TouchableOpacity
         style={styles.navItem}
+        onPress={() => handlePress("Resources")}
+      >
+        {React.cloneElement(icons.book, {
+          color: route.name === "Resources" ? colors.white : colors.gray,
+        })}
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={styles.navItem}
         onPress={() => handlePress("Profile")}
       >
         {React.cloneElement(icons.person, {

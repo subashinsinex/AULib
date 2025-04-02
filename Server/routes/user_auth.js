@@ -14,27 +14,38 @@ if (!SECRET_KEY || !REFRESH_SECRET) {
 
 // ✅ User Login (Checks is_active before login)
 router.post("/login", async (req, res) => {
-  const { user_id, password } = req.body;
-  if (!user_id || !password)
-    return res.status(400).json({ error: "Missing user_id or password" });
+  const { user_id, password, platform } = req.body;
+  if (!user_id || !password || !platform)
+    return res
+      .status(400)
+      .json({ error: "Missing user_id, password or platform" });
 
   try {
     const result = await pool.query(
-      "SELECT user_id, password, is_active FROM user_auth WHERE user_id = $1",
+      `SELECT ua.user_id, ua.password, ua.is_active, uc.category_name 
+       FROM user_auth ua
+       JOIN user_details ud ON ua.user_id = ud.user_id
+       JOIN user_category uc ON ud.user_cat_id = uc.user_cat_id
+       WHERE ua.user_id = $1`,
       [user_id]
     );
 
     if (result.rows.length === 0)
-      return res.status(401).json({ error: "Invalid user_id or password" });
+      return res.status(401).json({ error: "Invalid user_id" });
 
     const user = result.rows[0];
 
     if (!user.is_active)
       return res.status(403).json({ error: "Account is deactivated" });
 
-    // const isMatch = await bcrypt.compare(password, user.password);
-    // if (!isMatch)
-    //   return res.status(401).json({ error: "Invalid user_id or password" });
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid)
+      return res.status(401).json({ error: "Invalid password" });
+
+    // ✅ Restrict web login to admins only
+    if (platform === "web" && user.category_name !== "admin") {
+      return res.status(403).json({ error: "Only admins can log in from web" });
+    }
 
     // ✅ Check if the user has an active session
     const activeSession = await pool.query(
@@ -108,13 +119,16 @@ router.post("/refresh", async (req, res) => {
 
 // ✅ User Logout (Update logout time)
 router.post("/logout", async (req, res) => {
-  const { userId } = req.body;
-  if (!userId) return res.status(400).json({ error: "Missing user_id" });
+  const token = req.header("Authorization")?.split(" ")[1];
+  if (!token) return res.status(401).json({ error: "No token provided" });
 
   try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    const userId = decoded.userId;
+
+    // ✅ Mark user as logged out
     await pool.query(
-      `UPDATE user_online 
-       SET logout_time = NOW() 
+      `UPDATE user_online SET logout_time = NOW() 
        WHERE user_id = $1 AND logout_time IS NULL`,
       [userId]
     );
@@ -122,7 +136,7 @@ router.post("/logout", async (req, res) => {
     res.json({ success: true });
   } catch (error) {
     console.error("Logout error:", error);
-    res.status(500).json({ error: "Database error", details: error.message });
+    res.status(403).json({ error: "Invalid token" });
   }
 });
 

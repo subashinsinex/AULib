@@ -23,6 +23,11 @@ export default function Home() {
     monthly_logins: 0,
     yearly_logins: 0,
   });
+  const [resourceStats, setResourceStats] = useState({
+    total_access: 0,
+    monthly_access: 0,
+    yearly_access: 0,
+  });
   const { accessToken } = useContext(AuthContext);
 
   useEffect(() => {
@@ -34,6 +39,7 @@ export default function Home() {
           const parsedProfile = JSON.parse(storedProfile);
           setProfile(parsedProfile);
           await fetchLoginStats(parsedProfile.user_id);
+          await fetchResourceAccessStats(parsedProfile.user_id);
         } else {
           console.log("No profile data found.");
         }
@@ -65,6 +71,24 @@ export default function Home() {
     }
   };
 
+  const fetchResourceAccessStats = async (userId) => {
+    try {
+      const response = await fetch(
+        `http://${secret.Server_IP}:${secret.Server_Port}/stats/access/${userId}`,
+        { headers: { Authorization: `Bearer ${accessToken}` } }
+      );
+      const data = await response.json();
+
+      if (response.ok) {
+        setResourceStats(data);
+      } else {
+        console.error("Error fetching resource access stats:", data.error);
+      }
+    } catch (error) {
+      console.error("Failed to fetch resource access statistics:", error);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={styles.container}>
@@ -90,8 +114,8 @@ export default function Home() {
             <Text style={styles.cardValue}>{loginStats.total_logins}</Text>
           </View>
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Resources Accessed</Text>
-            <Text style={styles.cardValue}>-</Text>
+            <Text style={styles.cardTitle}>Resource Access</Text>
+            <Text style={styles.cardValue}>{resourceStats.total_access}</Text>
           </View>
         </View>
 
@@ -101,14 +125,30 @@ export default function Home() {
             title="Your Monthly Usage"
             data={{
               labels: ["Login", "Resource", "PDF"],
-              datasets: [{ data: [loginStats.monthly_logins, 0, 0] }],
+              datasets: [
+                {
+                  data: [
+                    loginStats.monthly_logins,
+                    resourceStats.monthly_access,
+                    0,
+                  ],
+                },
+              ],
             }}
           />
           <Chart
             title="Your Overall Usage"
             data={{
               labels: ["Login", "Resource", "PDF"],
-              datasets: [{ data: [loginStats.yearly_logins, 0, 0] }],
+              datasets: [
+                {
+                  data: [
+                    loginStats.yearly_logins,
+                    resourceStats.yearly_access,
+                    0,
+                  ],
+                },
+              ],
             }}
           />
         </View>

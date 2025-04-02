@@ -7,6 +7,8 @@ const favoritesRoutes = require("./routes/favorites");
 const searchRoutes = require("./routes/search");
 const profileRoutes = require("./routes/profile");
 const statsRoutes = require("./routes/stats");
+const eresourcesRoutes = require("./routes/eresources");
+const adminUsersRoutes = require("./routes/admin_users");
 
 const app = express();
 app.use(cors());
@@ -18,6 +20,8 @@ app.use("/favorites", favoritesRoutes);
 app.use("/search", searchRoutes);
 app.use("/profile", profileRoutes);
 app.use("/stats", statsRoutes);
+app.use("/eresources", eresourcesRoutes);
+app.use("/admin/users", adminUsersRoutes);
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST;

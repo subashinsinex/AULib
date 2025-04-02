@@ -3,11 +3,19 @@ const pool = require("../db");
 const router = express.Router();
 const jwtChecker = require("../utils/jwtchecker");
 
-// ✅ Get User Profile
+// ✅ Get User Profile (Fixed)
 router.get("/:userId", jwtChecker, async (req, res) => {
   const userId = parseInt(req.params.userId);
-  if (!Number.isInteger(userId))
+  const authUserId = req.userId; // Extracted from jwtChecker middleware
+
+  if (!Number.isInteger(userId)) {
     return res.status(400).json({ error: "Invalid user ID" });
+  }
+
+  // ✅ Ensure user can only access their own profile
+  if (authUserId !== userId.toString()) {
+    return res.status(403).json({ error: "Unauthorized access" });
+  }
 
   try {
     const query = `
@@ -24,7 +32,7 @@ router.get("/:userId", jwtChecker, async (req, res) => {
       LEFT JOIN college c ON ud.college_id = c.college_id
       LEFT JOIN department d ON ud.department_id = d.department_id
       LEFT JOIN branch b ON ud.branch_id = b.branch_id
-      LEFT JOIN degree dg ON b.degree_id = dg.degree_id
+      LEFT JOIN degree dg ON ud.degree_id = dg.degree_id
       LEFT JOIN user_online uo ON ua.user_id = uo.user_id
       WHERE ua.user_id = $1
       ORDER BY uo.login_time DESC
@@ -39,8 +47,8 @@ router.get("/:userId", jwtChecker, async (req, res) => {
 
     res.json(rows[0]);
   } catch (error) {
-    console.error("Error fetching profile:", error);
-    res.status(500).json({ error: "Database error" });
+    console.error("Error fetching profile:", error); // Log the full error for debugging
+    res.status(500).json({ error: `Database error: ${error.message}` }); // Include the error message in the response
   }
 });
 

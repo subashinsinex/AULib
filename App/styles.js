@@ -189,7 +189,7 @@ export default StyleSheet.create({
     alignSelf: "flex-start",
   },
   openAccessText: {
-    fontSize: 10,
+    fontSize: 12,
     color: "#2e7d32",
     fontWeight: "500",
   },
