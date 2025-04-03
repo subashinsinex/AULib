@@ -27,7 +27,7 @@ const Dashboard = () => {
   };
 
   return (
-    <Box>
+    <Box sx={{ flex: 1, paddingBottom: "36px" }}>
       {/* Welcome Banner */}
       <Box
         sx={{

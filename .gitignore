@@ -5,6 +5,8 @@ App/node_modules/
 Web/node_modules/
 Server/node_modules/
 Server/.env
+Server/temp/
+Server/uploads/
 */.env
 
 # Expo

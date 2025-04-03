@@ -62,7 +62,6 @@ const ActionBar = styled(Box)({
   display: "flex",
   justifyContent: "space-between",
   alignItems: "center",
-  padding: "12px 16px",
   backgroundColor: "#f7f9fc",
   borderRadius: "8px",
   marginBottom: "16px",
@@ -400,7 +399,7 @@ const ManageUser = () => {
   };
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box>
       <ActionBar>
         <TextField
           variant="outlined"
@@ -514,9 +513,9 @@ const ManageUser = () => {
           display: "flex",
           flexWrap: "wrap",
           justifyContent: "flex-start",
-          p: 1,
           overflow: "auto",
-          maxHeight: "calc(100vh - 180px)",
+          flex: 1,
+          paddingBottom: "32px",
         }}
       >
         {filteredUsers.length > 0 ? (

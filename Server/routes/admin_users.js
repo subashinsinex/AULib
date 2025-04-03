@@ -1,9 +1,15 @@
 const express = require("express");
 const pool = require("../db");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
 const jwtChecker = require("../utils/jwtchecker");
+const xlsx = require("xlsx");
+const fs = require("fs");
+const path = require("path");
 
 const router = express.Router();
+// Multer storage for file uploads
+const upload = multer({ dest: path.join(__dirname, "../uploads") });
 
 // Admin Checker Middleware
 const adminChecker = async (req, res, next) => {
@@ -223,5 +229,247 @@ router.put(
     }
   }
 );
+
+// Ensure directories exist
+const ensureDirectoriesExist = () => {
+  const uploadsDir = path.join(__dirname, "../uploads");
+  const tempDir = path.join(__dirname, "../temp");
+
+  [uploadsDir, tempDir].forEach((dir) => {
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+  });
+};
+ensureDirectoriesExist();
+
+// Fetch reference data from database
+const getReferenceMaps = async () => {
+  try {
+    const [categories, colleges, departments, degrees, branches] =
+      await Promise.all([
+        pool.query(
+          "SELECT user_cat_id AS id, category_name AS name FROM user_category"
+        ),
+        pool.query(
+          "SELECT college_id AS id, college_name AS name FROM college"
+        ),
+        pool.query(
+          "SELECT department_id AS id, department_name AS name FROM department"
+        ),
+        pool.query("SELECT degree_id AS id, degree_name AS name FROM degree"),
+        pool.query("SELECT branch_id AS id, branch_name AS name FROM branch"),
+      ]);
+
+    const createMap = (rows) =>
+      rows.reduce(
+        (map, row) => ({
+          ...map,
+          [row.name.toLowerCase()]: row.id,
+        }),
+        {}
+      );
+
+    return {
+      categoryMap: createMap(categories.rows),
+      collegeMap: createMap(colleges.rows),
+      departmentMap: createMap(departments.rows),
+      degreeMap: createMap(degrees.rows),
+      branchMap: createMap(branches.rows),
+    };
+  } catch (error) {
+    console.error("Error getting reference maps:", error);
+    throw error;
+  }
+};
+
+// Transform Excel row to database format
+const transformRow = (row, maps) => {
+  const { categoryMap, collegeMap, departmentMap, degreeMap, branchMap } = maps;
+  return {
+    user_id: row.user_id,
+    name: row.name,
+    email: row.email,
+    mobile: row.mobile,
+    user_cat_id: categoryMap[row.category_name?.toLowerCase()],
+    college_id: collegeMap[row.college_name?.toLowerCase()],
+    department_id: departmentMap[row.department_name?.toLowerCase()],
+    degree_id: degreeMap[row.degree_name?.toLowerCase()],
+    branch_id: branchMap[row.branch_name?.toLowerCase()],
+    batch_in: row.batch_in,
+    batch_out: row.batch_out,
+  };
+};
+
+// Insert user into database
+const insertUser = async (client, user) => {
+  await client.query("BEGIN");
+
+  try {
+    const password = await bcrypt.hash(user.mobile.toString(), 12);
+
+    await client.query(
+      `INSERT INTO user_auth (user_id, email, mobile, password)
+       VALUES ($1, $2, $3, $4)`,
+      [user.user_id, user.email, user.mobile, password]
+    );
+
+    await client.query(
+      `INSERT INTO user_details (
+        user_id, name, user_cat_id, college_id, department_id,
+        degree_id, branch_id, batch_in, batch_out
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+      [
+        user.user_id,
+        user.name,
+        user.user_cat_id,
+        user.college_id || null,
+        user.department_id || null,
+        user.degree_id || null,
+        user.branch_id || null,
+        user.batch_in || null,
+        user.batch_out || null,
+      ]
+    );
+
+    await client.query("COMMIT");
+  } catch (error) {
+    await client.query("ROLLBACK");
+    throw error;
+  }
+};
+
+// Excel Upload Route with proper file cleanup
+router.post(
+  "/uploadExcel",
+  jwtChecker,
+  adminChecker,
+  upload.single("file"),
+  async (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: "No file uploaded" });
+    }
+
+    let workbook;
+    try {
+      workbook = xlsx.readFile(req.file.path);
+    } catch (error) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: "Invalid Excel file format" });
+    }
+
+    const sheet = workbook.Sheets[workbook.SheetNames[0]];
+    const rows = xlsx.utils.sheet_to_json(sheet);
+
+    if (!rows.length) {
+      fs.unlinkSync(req.file.path);
+      return res.status(400).json({ error: "No data found in sheet" });
+    }
+
+    const client = await pool.connect();
+    const errors = [];
+
+    try {
+      const maps = await getReferenceMaps();
+      await client.query("BEGIN");
+
+      for (const [index, row] of rows.entries()) {
+        try {
+          const user = transformRow(row, maps);
+
+          const exists = await client.query(
+            "SELECT 1 FROM user_auth WHERE user_id = $1 OR email = $2",
+            [user.user_id, user.email]
+          );
+
+          if (exists.rows.length > 0) {
+            throw new Error("User ID or email already exists");
+          }
+
+          await insertUser(client, user);
+        } catch (error) {
+          errors.push({
+            row: index + 2,
+            ...row,
+            error: error.message,
+          });
+        }
+      }
+
+      await client.query("COMMIT");
+
+      // In your uploadExcel route
+      if (errors.length > 0) {
+        // Generate error report
+        const errorWorkbook = xlsx.utils.book_new();
+        const errorSheet = xlsx.utils.json_to_sheet(
+          errors.map((error) => ({
+            ...error,
+            "Error Reason": error.error,
+          }))
+        );
+        xlsx.utils.book_append_sheet(errorWorkbook, errorSheet, "Errors");
+
+        const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+        const errorFileName = `user_import_errors_${timestamp}.xlsx`;
+        const errorFilePath = path.join(__dirname, "../temp", errorFileName);
+
+        // Ensure temp directory exists
+        if (!fs.existsSync(path.dirname(errorFilePath))) {
+          fs.mkdirSync(path.dirname(errorFilePath), { recursive: true });
+        }
+
+        // Write the error file
+        xlsx.writeFile(errorWorkbook, errorFilePath);
+
+        // Read the file and send it
+        const fileBuffer = fs.readFileSync(errorFilePath);
+
+        // Clean up files
+        cleanupFiles(req.file.path, errorFilePath);
+
+        // Send the file
+        res.setHeader(
+          "Content-Type",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        );
+        res.setHeader(
+          "Content-Disposition",
+          `attachment; filename=${errorFileName}`
+        );
+        return res.send(fileBuffer);
+      } else {
+        fs.unlinkSync(req.file.path);
+        return res.json({
+          success: true,
+          message: `Successfully imported ${rows.length} users`,
+        });
+      }
+    } catch (error) {
+      await client.query("ROLLBACK");
+      console.error("Error in uploadExcel:", error);
+      cleanupFiles(req.file.path);
+      res.status(500).json({
+        error: "Internal server error",
+        details: error.message,
+      });
+    } finally {
+      client.release();
+    }
+  }
+);
+
+// Helper function for file cleanup
+function cleanupFiles(...filePaths) {
+  filePaths.forEach((filePath) => {
+    try {
+      if (filePath && fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (err) {
+      console.error(`Error cleaning up file ${filePath}:`, err);
+    }
+  });
+}
 
 module.exports = router;

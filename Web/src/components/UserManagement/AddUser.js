@@ -94,7 +94,7 @@ const AddUser = () => {
 
   return (
     <>
-      <form onSubmit={handleSubmit}>
+      <form onSubmit={handleSubmit} style={{ paddingBottom: "36px" }}>
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <Typography variant="h6" sx={{ color: "#0984e3" }}>
@@ -275,6 +275,10 @@ const AddUser = () => {
         open={error !== null}
         message={error}
         onClose={() => setError(null)}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
         autoHideDuration={6000}
       />
 
@@ -283,6 +287,10 @@ const AddUser = () => {
         message={successMessage}
         onClose={() => setSuccessMessage("")}
         autoHideDuration={6000}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
       />
     </>
   );

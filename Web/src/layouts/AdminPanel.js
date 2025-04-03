@@ -16,7 +16,7 @@ const AdminPanelContainer = styled(Box)(() => ({
 
 const MainContent = styled(Box)(({ sidebarWidth }) => ({
   flexGrow: 1,
-  overflowY: "auto",
+  overflowY: "clip",
   marginLeft: sidebarWidth,
 }));
 

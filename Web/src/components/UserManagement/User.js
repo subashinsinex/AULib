@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, Stack } from "@mui/material";
 import AddUser from "./AddUser"; // Import AddUser component
-import AddCSV from "./AddCsv"; // Import AddCSV component
+import AddExcel from "./AddExcel"; // Import AddExcel component
 import ManageUser from "./ManageUser"; // Import ManageUser component
 
 function User() {
@@ -11,8 +11,8 @@ function User() {
     switch (activeComponent) {
       case "AddUser":
         return <AddUser />;
-      case "AddCSV":
-        return <AddCSV />;
+      case "AddExcel":
+        return <AddExcel />;
       case "ManageUser":
         return <ManageUser />;
       default:
@@ -36,15 +36,15 @@ function User() {
           Add User
         </Button>
         <Button
-          variant={activeComponent === "AddCSV" ? "contained" : "outlined"}
-          onClick={() => setActiveComponent("AddCSV")}
+          variant={activeComponent === "AddExcel" ? "contained" : "outlined"}
+          onClick={() => setActiveComponent("AddExcel")}
           sx={{
             backgroundColor:
-              activeComponent === "AddCSV" ? "#0984e3" : "inherit",
-            color: activeComponent === "AddCSV" ? "#fff" : "#0984e3",
+              activeComponent === "AddExcel" ? "#0984e3" : "inherit",
+            color: activeComponent === "AddExcel" ? "#fff" : "#0984e3",
           }}
         >
-          Add CSV
+          Add Many
         </Button>
         <Button
           variant={activeComponent === "ManageUser" ? "contained" : "outlined"}
