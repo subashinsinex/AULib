@@ -31,15 +31,14 @@ import {
   Paper,
 } from "@mui/material";
 import {
-  People,
-  CheckCircle,
-  TrendingUp,
-  InsertChartOutlined,
-  School,
-  CalendarToday,
+  Book,
+  LibraryBooks,
+  Category,
   Refresh,
-  Group,
-  Event,
+  TrendingUp,
+  Person,
+  LocalLibrary,
+  CalendarMonth,
 } from "@mui/icons-material";
 
 const CustomTooltip = ({ active, payload, label }) => {
@@ -145,34 +144,28 @@ const EmptyState = ({ message, icon }) => (
       color: "text.secondary",
     }}
   >
-    {icon || <InsertChartOutlined sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />}
+    {icon || <LibraryBooks sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />}
     <Typography variant="body1" sx={{ maxWidth: "80%", textAlign: "center" }}>
       {message || "No data available"}
     </Typography>
   </Box>
 );
 
-const UsersOverview = () => {
+const EResourceReport = () => {
   const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [stats, setStats] = useState({
-    totalUsers: 0,
-    activeUsers: 0,
-    newUsers: 0,
+    totalResources: 0,
+    totalAccesses: 0,
+    newResources: 0,
   });
-  const [categoryData, setCategoryData] = useState([]);
-  const [collegeData, setCollegeData] = useState([]);
-  const [batchData, setBatchData] = useState([]);
-  const [activityData, setActivityData] = useState({
-    metrics: {
-      activeNow: 0,
-      activeToday: 0,
-      activeThisWeek: 0,
-      activeThisMonth: 0,
-      totalUsers: 0,
-    },
-  });
+  const [typeData, setTypeData] = useState([]);
+  const [topResources, setTopResources] = useState([]);
+  const [topUsers, setTopUsers] = useState([]);
+  const [accessTrends, setAccessTrends] = useState([]);
+  const [publisherData, setPublisherData] = useState([]);
+  const [topPublishers, setTopPublishers] = useState([]);
 
   const COLORS = [
     theme.palette.primary.main,
@@ -188,85 +181,110 @@ const UsersOverview = () => {
       setLoading(true);
       setError(null);
 
-      const [statsRes, categoryRes, collegeRes, batchRes, activeRes] =
-        await Promise.all([
-          fetch(
-            `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/dashboard-stats`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                "Content-Type": "application/json",
-              },
-            }
-          ),
-          fetch(
-            `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/users-by-category`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                "Content-Type": "application/json",
-              },
-            }
-          ),
-          fetch(
-            `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/users-by-college`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                "Content-Type": "application/json",
-              },
-            }
-          ),
-          fetch(
-            `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/users-by-batch`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                "Content-Type": "application/json",
-              },
-            }
-          ),
-          fetch(
-            `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/users-active-status`,
-            {
-              headers: {
-                Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
-                "Content-Type": "application/json",
-              },
-            }
-          ),
-        ]);
+      const [
+        statsRes,
+        typeRes,
+        topResourcesRes,
+        topUsersRes,
+        trendsRes,
+        publisherRes,
+        topPublishersRes,
+      ] = await Promise.all([
+        fetch(
+          `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/eresource-stats`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+        fetch(
+          `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/eresources-by-type`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+        fetch(
+          `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/top-eresources`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+        fetch(
+          `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/top-users-by-access`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+        fetch(
+          `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/access-trends`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+        fetch(
+          `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/eresources-by-publisher`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+        fetch(
+          `http://${secret.Server_IP}:${secret.Server_Port}/admin/report/top-publishers`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+              "Content-Type": "application/json",
+            },
+          }
+        ),
+      ]);
 
       const checkStatus = (res) => {
         if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
         return res.json();
       };
 
-      const [statsData, categoryData, collegeData, batchData, activeData] =
-        await Promise.all([
-          checkStatus(statsRes),
-          checkStatus(categoryRes),
-          checkStatus(collegeRes),
-          checkStatus(batchRes),
-          checkStatus(activeRes),
-        ]);
+      const [
+        statsData,
+        typeData,
+        topResourcesData,
+        topUsersData,
+        trendsData,
+        publisherData,
+        topPublishersData,
+      ] = await Promise.all([
+        checkStatus(statsRes),
+        checkStatus(typeRes),
+        checkStatus(topResourcesRes),
+        checkStatus(topUsersRes),
+        checkStatus(trendsRes),
+        checkStatus(publisherRes),
+        checkStatus(topPublishersRes),
+      ]);
 
       setStats(statsData);
-      setCategoryData(categoryData);
-      setCollegeData(collegeData);
-      setBatchData(batchData);
-
-      setActivityData({
-        metrics: {
-          activeNow: parseInt(activeData.activeNow || 0),
-          activeToday: parseInt(activeData.activeToday || 0),
-          activeThisWeek: parseInt(activeData.activeThisWeek || 0),
-          activeThisMonth: parseInt(activeData.activeThisMonth || 0),
-          totalUsers: parseInt(
-            activeData.totalUsers || statsData.totalUsers || 0
-          ),
-        },
-      });
+      setTypeData(typeData);
+      setTopResources(topResourcesData);
+      setTopUsers(topUsersData);
+      setAccessTrends(trendsData);
+      setPublisherData(publisherData);
+      setTopPublishers(topPublishersData);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -310,10 +328,10 @@ const UsersOverview = () => {
       >
         <Box>
           <Typography variant="h4" fontWeight="700" gutterBottom>
-            User Analytics Dashboard
+            E-Resource Analytics Dashboard
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            Insights into user demographics and activity patterns
+            Insights into electronic resource usage and access patterns
           </Typography>
         </Box>
         <Button
@@ -330,29 +348,29 @@ const UsersOverview = () => {
       <Grid container spacing={3} sx={{ mb: 3 }}>
         <Grid item xs={12} sm={6} md={4} lg={3}>
           <StatCard
-            title="Total Users"
-            value={stats.totalUsers}
-            icon={<People />}
+            title="Total Resources"
+            value={stats.totalResources}
+            icon={<Book />}
             color={theme.palette.primary.main}
             loading={loading}
-            subtitle="All registered users"
+            subtitle="All e-resources"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={3}>
           <StatCard
-            title="Active Users"
-            value={stats.activeUsers}
-            icon={<CheckCircle />}
+            title="Total Accesses"
+            value={stats.totalAccesses}
+            icon={<TrendingUp />}
             color={theme.palette.success.main}
             loading={loading}
-            subtitle="Currently logged in"
+            subtitle="All-time views"
           />
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={3}>
           <StatCard
-            title="New Users"
-            value={stats.newUsers}
-            icon={<TrendingUp />}
+            title="New Resources"
+            value={stats.newResources}
+            icon={<LocalLibrary />}
             color={theme.palette.warning.main}
             loading={loading}
             subtitle="Added this month"
@@ -360,12 +378,19 @@ const UsersOverview = () => {
         </Grid>
         <Grid item xs={12} sm={6} md={4} lg={3}>
           <StatCard
-            title="Active Now"
-            value={activityData.metrics.activeNow}
-            icon={<Group />}
+            title="Daily Avg."
+            value={
+              accessTrends.length > 0
+                ? Math.round(
+                    accessTrends.reduce((sum, day) => sum + day.count, 0) /
+                      accessTrends.length
+                  )
+                : 0
+            }
+            icon={<CalendarMonth />}
             color={theme.palette.info.main}
             loading={loading}
-            subtitle="Currently active"
+            subtitle="Average daily accesses"
           />
         </Grid>
       </Grid>
@@ -373,7 +398,7 @@ const UsersOverview = () => {
       <Divider sx={{ my: 3 }} />
 
       <Grid container spacing={3}>
-        {/* Users by Category (Pie chart) */}
+        {/* Resources by Type (Pie chart) */}
         <Grid item xs={12} md={6}>
           <Card
             sx={{
@@ -392,10 +417,10 @@ const UsersOverview = () => {
             <CardHeader
               title={
                 <Typography variant="h6" fontWeight="600" color="text.primary">
-                  Users by Category
+                  Resources by Type
                 </Typography>
               }
-              subheader="Distribution of user types"
+              subheader="Distribution of e-resource types"
               sx={{
                 borderBottom: `1px solid ${theme.palette.divider}`,
                 py: 2,
@@ -413,24 +438,24 @@ const UsersOverview = () => {
                 >
                   <CircularProgress />
                 </Box>
-              ) : categoryData.length > 0 ? (
+              ) : typeData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <PieChart>
                     <Pie
-                      data={categoryData}
-                      dataKey="value"
-                      nameKey="name"
+                      data={typeData}
+                      dataKey="count"
+                      nameKey="type"
                       cx="50%"
                       cy="50%"
                       outerRadius={100}
                       innerRadius={60}
                       paddingAngle={2}
                       label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
+                        `${name} (${(percent * 100).toFixed(0)}%)`
                       }
                       labelLine={false}
                     >
-                      {categoryData.map((entry, index) => (
+                      {typeData.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={COLORS[index % COLORS.length]}
@@ -451,13 +476,16 @@ const UsersOverview = () => {
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
-                <EmptyState message="No category data available" />
+                <EmptyState
+                  message="No type data available"
+                  icon={<Category sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />}
+                />
               )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Users by College (Bar chart) */}
+        {/* Most Accessed E-Resources (Bar chart) */}
         <Grid item xs={12} md={6}>
           <Card
             sx={{
@@ -476,10 +504,10 @@ const UsersOverview = () => {
             <CardHeader
               title={
                 <Typography variant="h6" fontWeight="600" color="text.primary">
-                  Users by College
+                  Most Accessed Resources
                 </Typography>
               }
-              subheader="Distribution across colleges"
+              subheader="Top 10 frequently accessed e-resources"
               sx={{
                 borderBottom: `1px solid ${theme.palette.divider}`,
                 py: 2,
@@ -497,10 +525,10 @@ const UsersOverview = () => {
                 >
                   <CircularProgress />
                 </Box>
-              ) : collegeData.length > 0 ? (
+              ) : topResources.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <BarChart
-                    data={collegeData}
+                    data={topResources}
                     margin={{ top: 15, right: 15, left: 0, bottom: 15 }}
                     layout="vertical"
                   >
@@ -516,7 +544,7 @@ const UsersOverview = () => {
                       tickLine={false}
                     />
                     <YAxis
-                      dataKey="college_name"
+                      dataKey="title"
                       type="category"
                       width={120}
                       tick={{ fontSize: 12 }}
@@ -532,8 +560,8 @@ const UsersOverview = () => {
                       cursor={{ fill: "rgba(0,0,0,0.05)" }}
                     />
                     <Bar
-                      dataKey="user_count"
-                      name="Users"
+                      dataKey="access_count"
+                      name="Accesses"
                       fill={theme.palette.primary.main}
                       radius={[0, 4, 4, 0]}
                       animationBegin={200}
@@ -542,16 +570,13 @@ const UsersOverview = () => {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <EmptyState
-                  message="No college data available"
-                  icon={<School sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />}
-                />
+                <EmptyState message="No resource access data available" />
               )}
             </CardContent>
           </Card>
         </Grid>
 
-        {/* Users by Batch Year (Line chart) */}
+        {/* Top 10 Users by Access Frequency (Bar chart) */}
         <Grid item xs={12} md={6}>
           <Card
             sx={{
@@ -570,10 +595,10 @@ const UsersOverview = () => {
             <CardHeader
               title={
                 <Typography variant="h6" fontWeight="600" color="text.primary">
-                  Users by Batch Year
+                  Top Users by Access
                 </Typography>
               }
-              subheader="Distribution across graduation years"
+              subheader="Most active users by resource access"
               sx={{
                 borderBottom: `1px solid ${theme.palette.divider}`,
                 py: 2,
@@ -591,10 +616,99 @@ const UsersOverview = () => {
                 >
                   <CircularProgress />
                 </Box>
-              ) : batchData.length > 0 ? (
+              ) : topUsers.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart
+                    data={topUsers}
+                    margin={{ top: 15, right: 15, left: 0, bottom: 15 }}
+                    layout="vertical"
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      opacity={0.2}
+                      horizontal={true}
+                      vertical={false}
+                    />
+                    <XAxis
+                      type="number"
+                      tick={{ fontSize: 12 }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      dataKey="user_name"
+                      type="category"
+                      width={120}
+                      tick={{ fontSize: 12 }}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      content={<CustomTooltip />}
+                      cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                    />
+                    <Bar
+                      dataKey="access_count"
+                      name="Accesses"
+                      fill={theme.palette.secondary.main}
+                      radius={[0, 4, 4, 0]}
+                      animationBegin={200}
+                      animationDuration={1500}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState
+                  message="No user access data available"
+                  icon={<Person sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />}
+                />
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Daily/Monthly Access Trends (Line chart) */}
+        <Grid item xs={12} md={6}>
+          <Card
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: "16px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+              },
+            }}
+          >
+            <CardHeader
+              title={
+                <Typography variant="h6" fontWeight="600" color="text.primary">
+                  Access Trends
+                </Typography>
+              }
+              subheader="Daily resource access patterns"
+              sx={{
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                py: 2,
+              }}
+            />
+            <CardContent sx={{ flexGrow: 1 }}>
+              {loading ? (
+                <Box
+                  sx={{
+                    height: 300,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              ) : accessTrends.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
                   <LineChart
-                    data={batchData}
+                    data={accessTrends}
                     margin={{ top: 15, right: 15, left: 0, bottom: 15 }}
                   >
                     <CartesianGrid
@@ -603,7 +717,7 @@ const UsersOverview = () => {
                       vertical={false}
                     />
                     <XAxis
-                      dataKey="year"
+                      dataKey="date"
                       tick={{ fontSize: 12 }}
                       tickLine={false}
                     />
@@ -619,19 +733,19 @@ const UsersOverview = () => {
                     <Line
                       type="monotone"
                       dataKey="count"
-                      name="Students"
-                      stroke={theme.palette.secondary.main}
+                      name="Daily Accesses"
+                      stroke={theme.palette.success.main}
                       strokeWidth={3}
                       dot={{
                         r: 4,
                         strokeWidth: 2,
-                        fill: theme.palette.secondary.light,
+                        fill: theme.palette.success.light,
                       }}
                       activeDot={{
                         r: 6,
-                        stroke: theme.palette.secondary.dark,
+                        stroke: theme.palette.success.dark,
                         strokeWidth: 2,
-                        fill: theme.palette.secondary.main,
+                        fill: theme.palette.success.main,
                       }}
                       animationBegin={400}
                       animationDuration={2000}
@@ -640,9 +754,9 @@ const UsersOverview = () => {
                 </ResponsiveContainer>
               ) : (
                 <EmptyState
-                  message="No batch data available"
+                  message="No access trend data available"
                   icon={
-                    <CalendarToday sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
+                    <TrendingUp sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
                   }
                 />
               )}
@@ -650,7 +764,7 @@ const UsersOverview = () => {
           </Card>
         </Grid>
 
-        {/* User Activity Status (Bar chart) */}
+        {/* Resources by Publisher (Pie chart) */}
         <Grid item xs={12} md={6}>
           <Card
             sx={{
@@ -669,10 +783,10 @@ const UsersOverview = () => {
             <CardHeader
               title={
                 <Typography variant="h6" fontWeight="600" color="text.primary">
-                  User Activity Status
+                  Resources by Publisher
                 </Typography>
               }
-              subheader="Breakdown of user engagement"
+              subheader="Distribution across publishers"
               sx={{
                 borderBottom: `1px solid ${theme.palette.divider}`,
                 py: 2,
@@ -690,60 +804,100 @@ const UsersOverview = () => {
                 >
                   <CircularProgress />
                 </Box>
-              ) : activityData.metrics.totalUsers > 0 ? (
+              ) : publisherData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={publisherData}
+                      dataKey="count"
+                      nameKey="publisher"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={100}
+                      innerRadius={60}
+                      paddingAngle={2}
+                      label={({ name, percent }) =>
+                        `${name}: ${(percent * 100).toFixed(0)}%`
+                      }
+                      labelLine={false}
+                    >
+                      {publisherData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      content={<CustomTooltip />}
+                      cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                    />
+                    <Legend
+                      layout="vertical"
+                      verticalAlign="middle"
+                      align="right"
+                      iconType="circle"
+                      iconSize={10}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              ) : (
+                <EmptyState
+                  message="No publisher data available"
+                  icon={
+                    <LibraryBooks sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />
+                  }
+                />
+              )}
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Top Accessed Publishers (Bar chart) */}
+        <Grid item xs={12} md={6}>
+          <Card
+            sx={{
+              height: "100%",
+              display: "flex",
+              flexDirection: "column",
+              borderRadius: "16px",
+              boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+              transition: "transform 0.3s, box-shadow 0.3s",
+              "&:hover": {
+                transform: "translateY(-4px)",
+                boxShadow: "0 8px 24px rgba(0,0,0,0.1)",
+              },
+            }}
+          >
+            <CardHeader
+              title={
+                <Typography variant="h6" fontWeight="600" color="text.primary">
+                  Top Accessed Publishers
+                </Typography>
+              }
+              subheader="Publishers with most accessed resources"
+              sx={{
+                borderBottom: `1px solid ${theme.palette.divider}`,
+                py: 2,
+              }}
+            />
+            <CardContent sx={{ flexGrow: 1 }}>
+              {loading ? (
+                <Box
+                  sx={{
+                    height: 400,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <CircularProgress />
+                </Box>
+              ) : topPublishers.length > 0 ? (
+                <ResponsiveContainer width="100%" height={400}>
                   <BarChart
-                    data={[
-                      {
-                        status: "Active Now",
-                        count: parseInt(activityData.metrics.activeNow),
-                        percentage: (
-                          (parseInt(activityData.metrics.activeNow) /
-                            activityData.metrics.totalUsers) *
-                          100
-                        ).toFixed(1),
-                      },
-                      {
-                        status: "Active Today",
-                        count: parseInt(activityData.metrics.activeToday),
-                        percentage: (
-                          (parseInt(activityData.metrics.activeToday) /
-                            activityData.metrics.totalUsers) *
-                          100
-                        ).toFixed(1),
-                      },
-                      {
-                        status: "Active This Week",
-                        count: parseInt(activityData.metrics.activeThisWeek),
-                        percentage: (
-                          (parseInt(activityData.metrics.activeThisWeek) /
-                            activityData.metrics.totalUsers) *
-                          100
-                        ).toFixed(1),
-                      },
-                      {
-                        status: "Active This Month",
-                        count: parseInt(activityData.metrics.activeThisMonth),
-                        percentage: (
-                          (parseInt(activityData.metrics.activeThisMonth) /
-                            activityData.metrics.totalUsers) *
-                          100
-                        ).toFixed(1),
-                      },
-                      {
-                        status: "Never Active",
-                        count:
-                          activityData.metrics.totalUsers -
-                          parseInt(activityData.metrics.activeThisMonth),
-                        percentage: (
-                          ((activityData.metrics.totalUsers -
-                            parseInt(activityData.metrics.activeThisMonth)) /
-                            activityData.metrics.totalUsers) *
-                          100
-                        ).toFixed(1),
-                      },
-                    ]}
-                    margin={{ top: 15, right: 15, left: 0, bottom: 15 }}
+                    data={topPublishers}
+                    margin={{ top: 15, right: 15, left: 15, bottom: 15 }}
                   >
                     <CartesianGrid
                       strokeDasharray="3 3"
@@ -751,17 +905,14 @@ const UsersOverview = () => {
                       vertical={false}
                     />
                     <XAxis
-                      dataKey="status"
+                      dataKey="publisher"
                       tick={{ fontSize: 12 }}
                       tickLine={false}
-                      tickFormatter={(value) => {
-                        if (value === "Active Now") return "Now";
-                        if (value === "Active Today") return "Today";
-                        if (value === "Active This Week") return "This Week";
-                        if (value === "Active This Month") return "This Month";
-                        if (value === "Never Active") return "Never";
-                        return value;
-                      }}
+                      tickFormatter={(value) =>
+                        value.length > 15
+                          ? `${value.substring(0, 15)}...`
+                          : value
+                      }
                     />
                     <YAxis tick={{ fontSize: 12 }} tickLine={false} />
                     <Tooltip
@@ -769,29 +920,17 @@ const UsersOverview = () => {
                       cursor={{ fill: "rgba(0,0,0,0.05)" }}
                     />
                     <Bar
-                      dataKey="count"
-                      name="Users"
+                      dataKey="access_count"
+                      name="Accesses"
                       radius={[4, 4, 0, 0]}
                       animationBegin={200}
                       animationDuration={1500}
-                    >
-                      {[
-                        theme.palette.success.main,
-                        theme.palette.info.main,
-                        theme.palette.warning.main,
-                        theme.palette.primary.main,
-                        theme.palette.grey[500],
-                      ].map((color, index) => (
-                        <Cell key={`cell-${index}`} fill={color} />
-                      ))}
-                    </Bar>
+                      fill={theme.palette.info.main}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <EmptyState
-                  message="No activity data available"
-                  icon={<Event sx={{ fontSize: 48, mb: 1, opacity: 0.5 }} />}
-                />
+                <EmptyState message="No publisher access data available" />
               )}
             </CardContent>
           </Card>
@@ -801,4 +940,4 @@ const UsersOverview = () => {
   );
 };
 
-export default UsersOverview;
+export default EResourceReport;

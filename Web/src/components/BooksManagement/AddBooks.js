@@ -35,7 +35,7 @@ function AddExcel() {
     if (!file) return;
 
     setFile(file);
-    setErrorFile(null); // Reset error file when new file is selected
+    setErrorFile(null);
 
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -83,7 +83,7 @@ function AddExcel() {
 
     try {
       const response = await axios.post(
-        `http://${secret.Server_IP}:${secret.Server_Port}/admin/users/uploadExcelUser`,
+        `http://${secret.Server_IP}:${secret.Server_Port}/admin/books/uploadExcelRes`,
         formData,
         {
           headers: {
@@ -101,36 +101,50 @@ function AddExcel() {
       );
 
       const contentType = response.headers["content-type"];
+
       if (contentType.includes("application/json")) {
         const reader = new FileReader();
         reader.onload = () => {
-          const result = JSON.parse(reader.result);
-          showSnackbar(
-            result.message || "Users imported successfully!",
-            "success"
-          );
+          try {
+            const result = JSON.parse(reader.result);
+            showSnackbar(
+              result.message || "Users imported successfully!",
+              "success"
+            );
+          } catch {
+            showSnackbar("Unexpected JSON parse error", "error");
+          }
         };
         reader.readAsText(response.data);
-      } else {
-        // Store the error file for manual download
+      } else if (
+        contentType.includes(
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+      ) {
         const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
-        const filename = `user_import_errors_${timestamp}.xlsx`;
+        const filename = `resource_import_errors_${timestamp}.xlsx`;
         setErrorFile({
           blob: new Blob([response.data]),
-          filename: filename,
+          filename,
         });
         showSnackbar(
           "Some rows failed - download error file for details",
           "warning"
         );
+      } else {
+        showSnackbar("Unexpected response type from server", "error");
       }
     } catch (error) {
       console.error("Upload error:", error);
       if (error.response?.data) {
         const reader = new FileReader();
         reader.onload = () => {
-          const result = JSON.parse(reader.result);
-          showSnackbar(result.error || "Failed to upload file", "error");
+          try {
+            const result = JSON.parse(reader.result);
+            showSnackbar(result.error || "Failed to upload file", "error");
+          } catch {
+            showSnackbar("Failed to parse error response", "error");
+          }
         };
         reader.readAsText(error.response.data);
       } else {
@@ -181,7 +195,14 @@ function AddExcel() {
             <Table stickyHeader>
               <TableHead>
                 <TableRow>
-                  {Object.keys(data[0]).map((key) => (
+                  {[
+                    "title",
+                    "publisher",
+                    "resource_type",
+                    "file_url",
+                    "isbn",
+                    "issn",
+                  ].map((key) => (
                     <TableCell key={key} sx={{ fontWeight: "bold" }}>
                       {key}
                     </TableCell>
@@ -189,11 +210,20 @@ function AddExcel() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {data.slice(0, 50).map((row, i) => (
+                {data.map((row, i) => (
                   <TableRow key={i}>
-                    {Object.keys(data[0]).map((key) => (
-                      <TableCell key={key}>
-                        {row.hasOwnProperty(key) ? String(row[key]) : ""}
+                    {[
+                      "title",
+                      "publisher",
+                      "resource_type",
+                      "file_url",
+                      "isbn",
+                      "issn",
+                    ].map((key) => (
+                      <TableCell key={`${i}-${key}`}>
+                        {row[key] === undefined || row[key] === null
+                          ? ""
+                          : String(row[key])}
                       </TableCell>
                     ))}
                   </TableRow>

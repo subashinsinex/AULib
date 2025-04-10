@@ -16,7 +16,6 @@ import {
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import PersonIcon from "@mui/icons-material/Person";
 import BarChartIcon from "@mui/icons-material/BarChart";
-import LayersIcon from "@mui/icons-material/Layers";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import axios from "axios";
 import secret from "./secret";
@@ -28,7 +27,6 @@ const NAVIGATION = [
   { segment: "user", title: "User Management", icon: <PersonIcon /> },
   { segment: "books", title: "Books", icon: <MenuBook /> },
   { segment: "reports", title: "Reports", icon: <BarChartIcon /> },
-  { segment: "integrations", title: "Integrations", icon: <LayersIcon /> },
 ];
 
 const Sidebar = ({ onSelectItem, selected, isOpen, toggleSidebar }) => {

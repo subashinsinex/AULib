@@ -6,9 +6,7 @@ const router = express.Router();
 
 const adminChecker = async (req, res, next) => {
   try {
-    const userId = req.userId; // Extracted from JWT token
-
-    // Check if the logged-in user is an admin
+    const userId = req.userId;
     const adminCheck = await pool.query(
       "SELECT user_cat_id FROM user_details WHERE user_id = $1",
       [userId]
@@ -19,23 +17,16 @@ const adminChecker = async (req, res, next) => {
     }
 
     if (adminCheck.rows[0].user_cat_id !== 1) {
-      // Assuming 1 is the admin category ID
       return res.status(403).json({ error: "Access denied. Admins only." });
     }
 
-    next(); // User is admin, proceed to the next middleware/route handler
+    next();
   } catch (error) {
     console.error("Admin check error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
-/**
- * @api {get} /api/admin/reports/dashboard-stats Get Dashboard Statistics
- * @apiName GetDashboardStats
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/dashboard-stats", jwtChecker, adminChecker, async (req, res) => {
   try {
     // Get total users
@@ -46,7 +37,7 @@ router.get("/dashboard-stats", jwtChecker, adminChecker, async (req, res) => {
     const activeUsersQuery = `
       SELECT COUNT(DISTINCT user_id) AS active_users 
       FROM user_online 
-      WHERE logout_time IS NULL OR logout_time > (NOW() - INTERVAL '30 minutes')
+      WHERE logout_time IS NULL OR logout_time > (NOW() - INTERVAL '15 minutes')
     `;
     const activeUsers = await pool.query(activeUsersQuery);
 
@@ -69,12 +60,6 @@ router.get("/dashboard-stats", jwtChecker, adminChecker, async (req, res) => {
   }
 });
 
-/**
- * @api {get} /api/admin/reports/users-by-category Get Users by Category
- * @apiName GetUsersByCategory
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/users-by-category", jwtChecker, adminChecker, async (req, res) => {
   try {
     const query = `
@@ -92,19 +77,19 @@ router.get("/users-by-category", jwtChecker, adminChecker, async (req, res) => {
         COUNT(ud.user_id) DESC
     `;
     const result = await pool.query(query);
-    res.json(result.rows);
+    res.json(
+      result.rows.map((row) => ({
+        name: row.name,
+        value: Number(row.value),
+        percentage: Number(row.percentage),
+      }))
+    );
   } catch (err) {
     console.error("Error fetching users by category:", err);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
-/**
- * @api {get} /api/admin/reports/users-by-college Get Users by College
- * @apiName GetUsersByCollege
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/users-by-college", jwtChecker, adminChecker, async (req, res) => {
   try {
     const query = `
@@ -128,12 +113,6 @@ router.get("/users-by-college", jwtChecker, adminChecker, async (req, res) => {
   }
 });
 
-/**
- * @api {get} /api/admin/reports/users-by-batch Get Users by Batch Year
- * @apiName GetUsersByBatch
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/users-by-batch", jwtChecker, adminChecker, async (req, res) => {
   try {
     const query = `
@@ -156,13 +135,6 @@ router.get("/users-by-batch", jwtChecker, adminChecker, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-
-/**
- * @api {get} /api/admin/reports/users-active-status Get Active vs Inactive Users
- * @apiName GetUsersActiveStatus
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 
 router.get(
   "/users-active-status",
@@ -199,7 +171,7 @@ metrics AS (
   SELECT
     COUNT(*) FILTER (WHERE last_activity > NOW() - INTERVAL '15 minutes') AS active_now,
     COUNT(*) FILTER (WHERE last_activity::date = CURRENT_DATE) AS active_today,
-    COUNT(*) FILTER (WHERE date_trunc('week', last_activity) = date_trunc('week', CURRENT_DATE)) AS active_week,
+    COUNT(*) FILTER (WHERE last_activity >= date_trunc('week', CURRENT_DATE)) AS active_week,
     COUNT(*) FILTER (WHERE date_trunc('month', last_activity) = date_trunc('month', CURRENT_DATE)) AS active_month,
     COUNT(*) AS total_users
   FROM final_activity
@@ -224,12 +196,6 @@ FROM metrics;
   }
 );
 
-/**
- * @api {get} /api/admin/reports/resource-access Get Resource Access by Category
- * @apiName GetResourceAccess
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/resource-access", jwtChecker, adminChecker, async (req, res) => {
   try {
     const query = `
@@ -255,12 +221,6 @@ router.get("/resource-access", jwtChecker, adminChecker, async (req, res) => {
   }
 });
 
-/**
- * @api {get} /api/admin/reports/resource-usage Get Resource Usage Trends
- * @apiName GetResourceUsageTrends
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/resource-usage", jwtChecker, adminChecker, async (req, res) => {
   try {
     const { timeframe = "month" } = req.query;
@@ -301,12 +261,6 @@ router.get("/resource-usage", jwtChecker, adminChecker, async (req, res) => {
   }
 });
 
-/**
- * @api {get} /api/admin/reports/popular-resources Get Most Popular Resources
- * @apiName GetPopularResources
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/popular-resources", jwtChecker, adminChecker, async (req, res) => {
   try {
     const { limit = 10 } = req.query;
@@ -338,12 +292,6 @@ router.get("/popular-resources", jwtChecker, adminChecker, async (req, res) => {
   }
 });
 
-/**
- * @api {get} /api/admin/reports/user-activity Get Detailed User Activity
- * @apiName GetUserActivity
- * @apiGroup AdminReports
- * @apiPermission admin
- */
 router.get("/user-activity", jwtChecker, adminChecker, async (req, res) => {
   try {
     const { userId, days = 30 } = req.query;
@@ -408,5 +356,202 @@ router.get("/user-activity", jwtChecker, adminChecker, async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
+// E-Resource Statistics
+router.get("/eresource-stats", jwtChecker, adminChecker, async (req, res) => {
+  try {
+    // Get total resources count
+    const totalResQuery = await pool.query(
+      "SELECT COUNT(*) AS total FROM eresources"
+    );
+
+    // Get total accesses count
+    const totalAccessQuery = await pool.query(
+      "SELECT COUNT(*) AS total FROM user_access_log"
+    );
+
+    // Get new resources this month
+    const newResQuery = await pool.query(
+      `SELECT COUNT(*) AS total FROM eresources 
+             WHERE created_at >= date_trunc('month', CURRENT_DATE)`
+    );
+
+    res.json({
+      totalResources: parseInt(totalResQuery.rows[0].total),
+      totalAccesses: parseInt(totalAccessQuery.rows[0].total),
+      newResources: parseInt(newResQuery.rows[0].total),
+    });
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+// Resources by Type
+router.get(
+  "/eresources-by-type",
+  jwtChecker,
+  adminChecker,
+  async (req, res) => {
+    try {
+      const query = `
+        SELECT 
+          et.type_name AS type, 
+          COUNT(e.res_id)::integer AS count,
+          ROUND(
+            COUNT(e.res_id) * 100.0 / 
+            (SELECT COUNT(*) FROM eresources), 
+            1
+          ) AS percentage
+        FROM eresources e
+        JOIN eresource_types et ON e.res_type_id = et.res_type_id
+        GROUP BY et.type_name
+        ORDER BY count DESC
+        `;
+      const result = await pool.query(query);
+      res.json(result.rows);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server error");
+    }
+  }
+);
+
+// Top Accessed E-Resources
+router.get("/top-eresources", jwtChecker, adminChecker, async (req, res) => {
+  try {
+    const query = `
+            SELECT e.res_id, e.title, COUNT(ual.access_time) AS access_count,
+                   COALESCE(eb.isbn, ej.issn) AS identifier
+            FROM eresources e
+            LEFT JOIN ebooks eb ON e.res_id = eb.res_id
+            LEFT JOIN ejournals ej ON e.res_id = ej.res_id
+            JOIN user_access_log ual ON e.res_id = ual.res_id
+            GROUP BY e.res_id, e.title, eb.isbn, ej.issn
+            ORDER BY access_count DESC
+            LIMIT 10
+        `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+// Access Trends (Daily)
+router.get("/access-trends", jwtChecker, adminChecker, async (req, res) => {
+  try {
+    const { period = "daily" } = req.query;
+
+    let query;
+    if (period === "monthly") {
+      query = `
+                SELECT 
+                    to_char(date_trunc('month', access_time), 'YYYY-MM') AS date,
+                    COUNT(*) AS count
+                FROM user_access_log
+                WHERE access_time >= CURRENT_DATE - INTERVAL '1 year'
+                GROUP BY date_trunc('month', access_time)
+                ORDER BY date_trunc('month', access_time)
+            `;
+    } else {
+      // Default to daily
+      query = `
+                SELECT 
+                    to_char(date_trunc('day', access_time), 'YYYY-MM-DD') AS date,
+                    COUNT(*) AS count
+                FROM user_access_log
+                WHERE access_time >= CURRENT_DATE - INTERVAL '30 days'
+                GROUP BY date_trunc('day', access_time)
+                ORDER BY date_trunc('day', access_time)
+            `;
+    }
+
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+// Resources by Publisher
+router.get(
+  "/eresources-by-publisher",
+  jwtChecker,
+  adminChecker,
+  async (req, res) => {
+    try {
+      const query = `
+        SELECT 
+          p.publish_name AS publisher, 
+          COUNT(e.res_id)::integer AS count,
+          ROUND(
+            COUNT(e.res_id) * 100.0 / 
+            (SELECT COUNT(*) FROM eresources), 
+            1
+          ) AS percentage
+        FROM eresources e
+        JOIN publishers p ON e.pub_id = p.pub_id
+        GROUP BY p.publish_name
+        ORDER BY count DESC
+        LIMIT 10
+        `;
+      const result = await pool.query(query);
+      res.json(result.rows);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server error");
+    }
+  }
+);
+
+// Top Accessed Publishers
+router.get("/top-publishers", jwtChecker, adminChecker, async (req, res) => {
+  try {
+    const query = `
+            SELECT p.publish_name AS publisher, COUNT(ual.access_time) AS access_count
+            FROM publishers p
+            JOIN eresources e ON p.pub_id = e.pub_id
+            JOIN user_access_log ual ON e.res_id = ual.res_id
+            GROUP BY p.publish_name
+            ORDER BY access_count DESC
+            LIMIT 10
+        `;
+    const result = await pool.query(query);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server error");
+  }
+});
+
+// Top Users by Access Frequency
+router.get(
+  "/top-users-by-access",
+  jwtChecker,
+  adminChecker,
+  async (req, res) => {
+    try {
+      const query = `
+        SELECT u.user_id,
+          ud.name AS user_name,
+          COUNT(ual.access_time) AS access_count
+        FROM user_auth u
+        JOIN user_details ud ON u.user_id = ud.user_id
+        JOIN user_access_log ual ON u.user_id = ual.user_id
+        GROUP BY u.user_id, ud.name
+        ORDER BY access_count DESC
+        LIMIT 10
+        `;
+      const result = await pool.query(query);
+      res.json(result.rows);
+    } catch (err) {
+      console.error(err.message);
+      res.status(500).send("Server error");
+    }
+  }
+);
 
 module.exports = router;

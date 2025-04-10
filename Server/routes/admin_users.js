@@ -8,15 +8,11 @@ const fs = require("fs");
 const path = require("path");
 
 const router = express.Router();
-// Multer storage for file uploads
 const upload = multer({ dest: path.join(__dirname, "../uploads") });
 
-// Admin Checker Middleware
 const adminChecker = async (req, res, next) => {
   try {
-    const userId = req.userId; // Extracted from JWT token
-
-    // Check if the logged-in user is an admin
+    const userId = req.userId;
     const adminCheck = await pool.query(
       "SELECT user_cat_id FROM user_details WHERE user_id = $1",
       [userId]
@@ -27,11 +23,10 @@ const adminChecker = async (req, res, next) => {
     }
 
     if (adminCheck.rows[0].user_cat_id !== 1) {
-      // Assuming 1 is the admin category ID
       return res.status(403).json({ error: "Access denied. Admins only." });
     }
 
-    next(); // User is admin, proceed to the next middleware/route handler
+    next();
   } catch (error) {
     console.error("Admin check error:", error);
     res.status(500).json({ error: "Internal Server Error" });
@@ -197,13 +192,11 @@ router.put(
     try {
       await client.query("BEGIN");
 
-      // Update user_auth table
       await client.query(
         `UPDATE user_auth SET email = $1, mobile = $2, updated_at = CURRENT_TIMESTAMP WHERE user_id = $3`,
         [email, mobile, userId]
       );
 
-      // Update user_details table
       await client.query(
         `UPDATE user_details SET name = $1, college_id = $2, department_id = $3, degree_id = $4, branch_id = $5, batch_in = $6, batch_out = $7 WHERE user_id = $8`,
         [
@@ -230,7 +223,6 @@ router.put(
   }
 );
 
-// Ensure directories exist
 const ensureDirectoriesExist = () => {
   const uploadsDir = path.join(__dirname, "../uploads");
   const tempDir = path.join(__dirname, "../temp");
@@ -243,7 +235,6 @@ const ensureDirectoriesExist = () => {
 };
 ensureDirectoriesExist();
 
-// Fetch reference data from database
 const getReferenceMaps = async () => {
   try {
     const [categories, colleges, departments, degrees, branches] =
@@ -283,7 +274,6 @@ const getReferenceMaps = async () => {
   }
 };
 
-// Transform Excel row to database format
 const transformRow = (row, maps) => {
   const { categoryMap, collegeMap, departmentMap, degreeMap, branchMap } = maps;
   return {
@@ -291,17 +281,16 @@ const transformRow = (row, maps) => {
     name: row.name,
     email: row.email,
     mobile: row.mobile,
-    user_cat_id: categoryMap[row.category_name?.toLowerCase()],
-    college_id: collegeMap[row.college_name?.toLowerCase()],
-    department_id: departmentMap[row.department_name?.toLowerCase()],
-    degree_id: degreeMap[row.degree_name?.toLowerCase()],
-    branch_id: branchMap[row.branch_name?.toLowerCase()],
+    user_cat_id: categoryMap[row.category_name?.toLowerCase().trim()],
+    college_id: collegeMap[row.college_name?.toLowerCase().trim()],
+    department_id: departmentMap[row.department_name?.toLowerCase().trim()],
+    degree_id: degreeMap[row.degree_name?.toLowerCase().trim()],
+    branch_id: branchMap[row.branch_name?.toLowerCase().trim()],
     batch_in: row.batch_in,
     batch_out: row.batch_out,
   };
 };
 
-// Insert user into database
 const insertUser = async (client, user) => {
   await client.query("BEGIN");
 
@@ -339,9 +328,8 @@ const insertUser = async (client, user) => {
   }
 };
 
-// Excel Upload Route with proper file cleanup
 router.post(
-  "/uploadExcel",
+  "/uploadExcelUser",
   jwtChecker,
   adminChecker,
   upload.single("file"),
@@ -368,6 +356,7 @@ router.post(
 
     const client = await pool.connect();
     const errors = [];
+    let successCount = 0;
 
     try {
       const maps = await getReferenceMaps();
@@ -387,6 +376,7 @@ router.post(
           }
 
           await insertUser(client, user);
+          successCount++;
         } catch (error) {
           errors.push({
             row: index + 2,
@@ -398,9 +388,7 @@ router.post(
 
       await client.query("COMMIT");
 
-      // In your uploadExcel route
       if (errors.length > 0) {
-        // Generate error report
         const errorWorkbook = xlsx.utils.book_new();
         const errorSheet = xlsx.utils.json_to_sheet(
           errors.map((error) => ({
@@ -414,21 +402,16 @@ router.post(
         const errorFileName = `user_import_errors_${timestamp}.xlsx`;
         const errorFilePath = path.join(__dirname, "../temp", errorFileName);
 
-        // Ensure temp directory exists
         if (!fs.existsSync(path.dirname(errorFilePath))) {
           fs.mkdirSync(path.dirname(errorFilePath), { recursive: true });
         }
 
-        // Write the error file
         xlsx.writeFile(errorWorkbook, errorFilePath);
 
-        // Read the file and send it
         const fileBuffer = fs.readFileSync(errorFilePath);
 
-        // Clean up files
         cleanupFiles(req.file.path, errorFilePath);
 
-        // Send the file
         res.setHeader(
           "Content-Type",
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -442,7 +425,8 @@ router.post(
         fs.unlinkSync(req.file.path);
         return res.json({
           success: true,
-          message: `Successfully imported ${rows.length} users`,
+          imported: successCount,
+          message: `Successfully imported ${successCount} users`,
         });
       }
     } catch (error) {
@@ -459,7 +443,6 @@ router.post(
   }
 );
 
-// Helper function for file cleanup
 function cleanupFiles(...filePaths) {
   filePaths.forEach((filePath) => {
     try {

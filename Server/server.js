@@ -10,6 +10,7 @@ const statsRoutes = require("./routes/stats");
 const eresourcesRoutes = require("./routes/eresources");
 const adminUsersRoutes = require("./routes/admin_users");
 const reportRoutes = require("./routes/admin_report");
+const adminBooksRoutes = require("./routes/admin_books");
 
 const app = express();
 app.use(cors());
@@ -24,6 +25,7 @@ app.use("/stats", statsRoutes);
 app.use("/eresources", eresourcesRoutes);
 app.use("/admin/users", adminUsersRoutes);
 app.use("/admin/report", reportRoutes);
+app.use("/admin/books", adminBooksRoutes);
 
 const PORT = process.env.PORT || 5000;
 const HOST = process.env.HOST;
