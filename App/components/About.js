@@ -12,9 +12,8 @@ const About = () => {
 
   const handleLogout = async () => {
     try {
-      // Proceed with clearing the SecureStore data
       await logout();
-      navigation.replace("Login"); // Redirect to login screen after logout
+      navigation.replace("Login");
     } catch (error) {
       navigation.replace("Login");
     }

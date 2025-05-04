@@ -12,7 +12,7 @@ if (!SECRET_KEY || !REFRESH_SECRET) {
   );
 }
 
-// ✅ User Login (Checks is_active before login)
+// User Login (Checks is_active before login)
 router.post("/login", async (req, res) => {
   const { user_id, password, platform } = req.body;
   if (!user_id || !password || !platform)
@@ -42,12 +42,12 @@ router.post("/login", async (req, res) => {
     if (!isPasswordValid)
       return res.status(401).json({ error: "Invalid password" });
 
-    // ✅ Restrict web login to admins only
+    // Restrict web login to admins only
     if (platform === "web" && user.category_name !== "admin") {
       return res.status(403).json({ error: "Only admins can log in from web" });
     }
 
-    // ✅ Check if the user has an active session
+    // Check if the user has an active session
     const activeSession = await pool.query(
       `SELECT * FROM user_online 
        WHERE user_id = $1 AND logout_time IS NULL`,
@@ -55,7 +55,7 @@ router.post("/login", async (req, res) => {
     );
 
     if (activeSession.rows.length > 0) {
-      // ✅ Logout previous session
+      // Logout previous session
       await pool.query(
         `UPDATE user_online 
          SET logout_time = NOW() 
@@ -72,7 +72,7 @@ router.post("/login", async (req, res) => {
       expiresIn: "14d",
     });
 
-    // ✅ Store new login time
+    // Store new login time
     await pool.query(
       `INSERT INTO user_online (user_id, login_time) 
        VALUES ($1, NOW())`,
@@ -86,7 +86,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Refresh Token
+// Refresh Token
 router.post("/refresh", async (req, res) => {
   const { refreshToken } = req.body;
   if (!refreshToken)
@@ -106,7 +106,7 @@ router.post("/refresh", async (req, res) => {
       return res.status(403).json({ error: "Invalid refresh token" });
     }
 
-    // ✅ Update last_active_at for current session
+    // Update last_active_at for current session
     await pool.query(
       `UPDATE user_online SET last_active_at = NOW()
        WHERE user_id = $1 AND logout_time IS NULL`,
@@ -124,7 +124,7 @@ router.post("/refresh", async (req, res) => {
   }
 });
 
-// ✅ User Logout (Update logout time)
+// User Logout (Update logout time)
 router.post("/logout", async (req, res) => {
   const token = req.header("Authorization")?.split(" ")[1];
   if (!token) return res.status(401).json({ error: "No token provided" });
@@ -133,7 +133,7 @@ router.post("/logout", async (req, res) => {
     const decoded = jwt.verify(token, SECRET_KEY);
     const userId = decoded.userId;
 
-    // ✅ Mark user as logged out
+    // Mark user as logged out
     await pool.query(
       `UPDATE user_online SET logout_time = NOW() 
        WHERE user_id = $1 AND logout_time IS NULL`,

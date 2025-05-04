@@ -6,7 +6,7 @@ import {
   View,
 } from "react-native";
 import { TabView, TabBar } from "react-native-tab-view";
-import { GestureHandlerRootView } from "react-native-gesture-handler"; // ✅ Only this is needed
+import { GestureHandlerRootView } from "react-native-gesture-handler"; // Only this is needed
 import colors from "../constants/colors";
 import styles from "../styles";
 import TopBar from "../components/TopBar";
@@ -42,7 +42,7 @@ export default function Dashboard() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* ✅ Global gesture handling without interference */}
+      {/* Global gesture handling without interference */}
       <SafeAreaView style={styles.container}>
         <StatusBar backgroundColor={colors.primary} barStyle="light-content" />
         <TopBar title="Dashboard" />

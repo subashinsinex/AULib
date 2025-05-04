@@ -61,6 +61,22 @@ export const AuthProvider = ({ children, navigationRef }) => {
       }
     } catch (error) {
       console.error("Error during logout:", error);
+      if (error.response?.status === 403 || error.response?.status === 401) {
+        console.log("Access forbidden, logging out");
+        await SecureStore.deleteItemAsync("auth");
+        await SecureStore.deleteItemAsync("accessToken");
+        await SecureStore.deleteItemAsync("refreshToken");
+        await SecureStore.deleteItemAsync("profile");
+
+        setUser(null);
+        setAccessToken(null);
+        setRefreshToken(null);
+        setProfile(null);
+
+        if (navigationRef?.current?.isReady()) {
+          navigationRef.current.navigate("Login");
+        }
+      }
     }
   };
 
@@ -87,6 +103,9 @@ export const AuthProvider = ({ children, navigationRef }) => {
       console.error("Error refreshing token:", error);
       if (error.response?.status === 401) {
         console.log("Logging out due to expired tokens");
+        logout();
+      } else if (error.response?.status === 403) {
+        console.log("Access forbidden, logging out");
         logout();
       } else {
         if (navigationRef?.current?.isReady()) {

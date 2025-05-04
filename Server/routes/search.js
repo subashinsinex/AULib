@@ -6,7 +6,7 @@ const jwtChecker = require("../utils/jwtchecker");
 
 const router = express.Router();
 
-// ✅ Basic Search
+// Basic Search
 router.get("/fetch", jwtChecker, async (req, res) => {
   const { query = "AI", startIndex = 0, itemsPerPage = 25, userId } = req.query;
 
@@ -36,7 +36,7 @@ router.get("/fetch", jwtChecker, async (req, res) => {
   }
 });
 
-// ✅ Advanced Search
+// Advanced Search
 router.get("/fetch-advanced", jwtChecker, async (req, res) => {
   const {
     title,

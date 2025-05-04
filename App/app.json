@@ -2,6 +2,7 @@
   "expo": {
     "name": "university-library-app",
     "slug": "university-library-app",
+    "owner": "subashinsinex",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/Anna_University.png",
@@ -20,11 +21,13 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      "expo-secure-store"
+    ],
     "extra": {
       "eas": {
-        "projectId": "d51ee026-2141-416e-b8c8-c6952a79bb7a"
+        "projectId": "1cbba2a7-0c2b-4c3a-9c8c-bbbb030435ac"
       }
-    },
-    "plugins": ["expo-secure-store"]
+    }
   }
 }

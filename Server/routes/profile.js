@@ -3,7 +3,7 @@ const pool = require("../db");
 const router = express.Router();
 const jwtChecker = require("../utils/jwtchecker");
 
-// ✅ Get User Profile (Fixed)
+// Get User Profile (Fixed)
 router.get("/:userId", jwtChecker, async (req, res) => {
   const userId = parseInt(req.params.userId);
   const authUserId = req.userId; // Extracted from jwtChecker middleware
@@ -12,7 +12,7 @@ router.get("/:userId", jwtChecker, async (req, res) => {
     return res.status(400).json({ error: "Invalid user ID" });
   }
 
-  // ✅ Ensure user can only access their own profile
+  // Ensure user can only access their own profile
   if (authUserId !== userId.toString()) {
     return res.status(403).json({ error: "Unauthorized access" });
   }

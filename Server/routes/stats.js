@@ -3,7 +3,7 @@ const pool = require("../db");
 const router = express.Router();
 const jwtChecker = require("../utils/jwtchecker");
 
-// ✅ Get User Login Statistics
+// Get User Login Statistics
 router.get("/login/:userId", jwtChecker, async (req, res) => {
   const userId = parseInt(req.params.userId);
   if (!Number.isInteger(userId)) {

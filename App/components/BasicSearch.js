@@ -41,7 +41,7 @@ const BasicSearch = () => {
   const userId = Number(user);
   const scrollY = useRef(new Animated.Value(0)).current;
 
-  // ✅ Load favorites
+  // Load favorites
   const loadFavorites = async () => {
     try {
       const res = await axios.get(
@@ -58,7 +58,7 @@ const BasicSearch = () => {
     loadFavorites();
   }, []);
 
-  // ✅ Fetch data
+  // Fetch data
   const fetchData = async (page = 0, isLoadMore = false) => {
     if (!query.trim()) return;
 
@@ -113,7 +113,7 @@ const BasicSearch = () => {
     }
   };
 
-  // ✅ Toggle favorite
+  // Toggle favorite
   const toggleFavorite = useCallback(async (doi, isFav) => {
     try {
       await axios.post(
@@ -150,12 +150,12 @@ const BasicSearch = () => {
     }
   }, []);
 
-  // ✅ Scroll to top
+  // Scroll to top
   const scrollToTop = () => {
     flatListRef.current?.scrollToOffset({ offset: 0, animated: true });
   };
 
-  // ✅ Memoized renderItem
+  // Memoized renderItem
   const renderItem = useCallback(
     ({ item }) => (
       <ItemCard

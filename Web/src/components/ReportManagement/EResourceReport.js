@@ -718,13 +718,31 @@ const EResourceReport = () => {
                     />
                     <XAxis
                       dataKey="date"
-                      tick={{ fontSize: 12 }}
+                      tick={{
+                        fontSize: 14, // Increased font size
+                        fontWeight: 500,
+                        fill: theme.palette.text.primary,
+                      }}
                       tickLine={false}
+                      height={40} // Increased height for XAxis
+                      padding={{ left: 10, right: 10 }} // Add padding if needed
                     />
                     <YAxis
-                      tick={{ fontSize: 12 }}
+                      tick={{
+                        fontSize: 14, // Increased font size
+                        fontWeight: 500,
+                        fill: theme.palette.text.primary,
+                      }}
                       tickLine={false}
-                      domain={[0, "dataMax + 2"]}
+                      width={40} // Increased width for YAxis
+                      domain={[0, "maxCount + 5"]}
+                      label={{
+                        value: "Access Count",
+                        angle: -90,
+                        position: "insideLeft",
+                        fontSize: 14,
+                        fill: theme.palette.text.primary,
+                      }}
                     />
                     <Tooltip
                       content={<CustomTooltip />}

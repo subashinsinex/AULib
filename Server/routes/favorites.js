@@ -3,7 +3,7 @@ const pool = require("../db");
 const router = express.Router();
 const jwtChecker = require("../utils/jwtchecker");
 
-// ✅ Get Favorites
+// Get Favorites
 router.get("/:userId", jwtChecker, async (req, res) => {
   const userId = parseInt(req.params.userId);
   if (!Number.isInteger(userId))
@@ -16,7 +16,7 @@ router.get("/:userId", jwtChecker, async (req, res) => {
     );
     res.json({ favorites: result.rows.map((row) => row.doi) });
 
-    // ✅ Update last_active_at for current session
+    // Update last_active_at for current session
     await pool.query(
       `UPDATE user_online SET last_active_at = NOW()
        WHERE user_id = $1 AND logout_time IS NULL`,
@@ -27,7 +27,7 @@ router.get("/:userId", jwtChecker, async (req, res) => {
   }
 });
 
-// ✅ Add/Remove Favorite
+// Add/Remove Favorite
 router.post("/", jwtChecker, async (req, res) => {
   const { userId, doi, isFav } = req.body;
 

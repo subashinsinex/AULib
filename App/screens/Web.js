@@ -21,27 +21,27 @@ export default function Web() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [canGoForward, setCanGoForward] = useState(false);
 
-  // 🔹 Handle WebView Navigation Updates
+  // Handle WebView Navigation Updates
   const handleNavigationStateChange = (event) => {
     setCanGoBack(event.canGoBack);
     setCanGoForward(event.canGoForward);
   };
 
-  // 🔹 Handle Back Navigation
+  // Handle Back Navigation
   const handleBackPress = () => {
     if (webViewRef.current && canGoBack) {
       webViewRef.current.goBack();
     }
   };
 
-  // 🔹 Handle Forward Navigation
+  // Handle Forward Navigation
   const handleForwardPress = () => {
     if (webViewRef.current && canGoForward) {
       webViewRef.current.goForward();
     }
   };
 
-  // 🔹 Handle Refresh
+  // Handle Refresh
   const handleRefreshPress = () => {
     if (webViewRef.current) {
       webViewRef.current.reload();
@@ -59,9 +59,9 @@ export default function Web() {
         source={{ uri }}
         javaScriptEnabled={true}
         domStorageEnabled={true}
-        sharedCookiesEnabled={false} // ✅ Avoid Cloudflare cookie issues
-        thirdPartyCookiesEnabled={false} // ✅ Avoid Cloudflare tracking blocks
-        setSupportMultipleWindows={false} // ✅ Support popups
+        sharedCookiesEnabled={false} // Avoid Cloudflare cookie issues
+        thirdPartyCookiesEnabled={false} // Avoid Cloudflare tracking blocks
+        setSupportMultipleWindows={false} // Support popups
         userAgent="Mozilla/5.0 (Linux; Android 10; Mobile; rv:109.0) Gecko/109.0 Firefox/109.0"
         onNavigationStateChange={handleNavigationStateChange}
       />
